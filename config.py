@@ -25,7 +25,7 @@ MAX_WHEEL_SPEED = 2.6
 TURN_RATE = 12
 CAR_WIDTH = 75
 CAR_LENGTH = 100
-WHEEL_RADIUS = 10 # consider changing to 16
+WHEEL_RADIUS = 10 # consider changing to 16 from 10
 
 # Pathfinding
 STRAIGHT_COST = 10

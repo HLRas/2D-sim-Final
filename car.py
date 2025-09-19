@@ -244,7 +244,7 @@ class Car:
 
             if distance < self.carrot_arrival_threshold:
                 self.carrot_index += 1
-                print(self.carrot_index)
+                
                 # Only show progress every 5 waypoints
                 if (self.carrot_index -1) % 5 == 0 or self.carrot_index >= len(self.carrot_path_points):
                     print(f"[Carrot] Reached waypoint {self.carrot_index-1}, moving to next ({self.carrot_index}/{len(self.carrot_path_points)})")
@@ -431,7 +431,7 @@ class Car:
             return 0,0
         
         # PID gains for cte correction
-        kp = 0.02
+        kp = 0.03
 
         # Calculate angle to lookahead point
         dx = lookahead_point[0] - self.x
