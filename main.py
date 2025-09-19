@@ -156,7 +156,8 @@ def headless_handling(headless):
 
 def queue_wheel_speeds(left_speed, right_speed, time_since_pathfollow):
     """Queue wheel speeds for sending to Arduino"""
-    wheel_speed_queue.append((left_speed, right_speed, time_since_pathfollow))
+    if start_time_follow != 0:
+        wheel_speed_queue.append((left_speed, right_speed, time_since_pathfollow))
 
 def handle_automated_pathfinding(frame_count, game_map : Map, car : Car):
     """Handle automated pathfinding setup for headless mode"""
