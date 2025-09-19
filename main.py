@@ -51,7 +51,7 @@ def arduino_thread():
         if restarted:
             restarted = False
             # remember to add new time for closed loop
-            
+
         if start_time_follow != 0:
             try:
                 if arduino_serial:
@@ -67,7 +67,7 @@ def arduino_thread():
                     dt = new_t - start_time_follow
                     
                     left, right, timestamp = find_closest(wheel_speed_queue, dt)
-
+                    print(left)
                     # Always remove data from queue (either send or discard)
                     with arduino_lock:
                         if left:
