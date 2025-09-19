@@ -50,7 +50,8 @@ def arduino_thread():
     while True:
         if restarted:
             restarted = False
-            start_time = time.time()
+            # remember to add new time for closed loop
+            
         if start_time_follow != 0:
             try:
                 if arduino_serial:
@@ -64,15 +65,9 @@ def arduino_thread():
                     
                     new_t = time.time()
                     dt = new_t - start_time_follow
-                    if len(wheel_speed_queue) < 40:
-
-                        print(dt)
-                        print(len(wheel_speed_queue))
+                    
                     left, right, timestamp = find_closest(wheel_speed_queue, dt)
-                    #print(wheel_speed_queue)
-                    print(left)
-                    print(timestamp)
-                    print(dt)
+
                     # Always remove data from queue (either send or discard)
                     with arduino_lock:
                         if left:
