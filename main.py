@@ -31,10 +31,11 @@ arduino_comm_thread = None
 
 # Starting time of auto-follow
 start_time_follow = time.time()
+restarted = True
 
 def arduino_thread():
     """Thread to handle Arduino communication"""
-    global arduino_serial, wheel_speed_queue
+    global arduino_serial, wheel_speed_queue, restarted
 
     # Initialize Arduino connection to specific port
     try:
@@ -46,28 +47,41 @@ def arduino_thread():
         print("[Arduino] Running in simulation-only mode (no Arduino communication)")
         arduino_serial = None
 
-    
-
-
     while True:
-        try:
-            current_time = time.time()
+        if restarted:
+            restarted = False
+            start_time = time.time()
 
-            # Only try serial comms if Arduino is connected
+        try:
             if arduino_serial:
-                # Check for incoming serial data from Arduino
-                if arduino_serial.in_waiting > 0:
-                    try:
+                try:
+                    if arduino_serial.in_waiting > 0:
                         incoming_data = arduino_serial.readline().decode('utf-8').strip()
                         if incoming_data:
                             print(f"[Arduino] Received: {incoming_data}")
-                    except Exception as read_error:
-                        print(f"[Arduino] Read error: {read_error}")
+                except Exception as e:
+                    print(f"[Python] Read error: {e}")
+                
+                new_t = time.time()
+                dt = new_t - start_time
+                
+                
+                left, right, timestamp = find_closest(wheel_speed_queue, dt)
+                # Always remove data from queue (either send or discard)
+                with arduino_lock:
+                    if left:
+                            try:
+                                msg = f"{left},{right}\n"
+                                arduino_serial.write(msg.encode('utf-8'))
+                                arduino_serial.flush()
+                                print(f"[Python] Sent: {msg} of relative time {timestamp}")
+                            except Exception as e:
+                                print(f"[Python] Write error: {e}")
 
-            with arduino_lock:
-                if wheel_speed_queue:
-                    pass
+            time.sleep(0.01)
+            
         except Exception as e:
+            #print(f"[Python] Failed: {e}")
             pass
             
 
@@ -368,6 +382,7 @@ def run(clock, car, game_map, caption):
             pygame.display.flip()               
 
 def find_closest(data, timestamp, index=2):
+    """Finds the closest data value to the specified timestamp"""
     timestamps = [tp[index] for tp in data]
     return data[bisect.bisect_left(timestamps, timestamp)]
 
