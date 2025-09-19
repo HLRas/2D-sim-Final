@@ -67,17 +67,18 @@ def arduino_thread():
                 
                 
                 left, right, timestamp = find_closest(wheel_speed_queue, dt)
-                print("i got here")
+                
                 # Always remove data from queue (either send or discard)
                 with arduino_lock:
                     if left:
-                            try:
-                                msg = f"{left},{right}\n"
-                                arduino_serial.write(msg.encode('utf-8'))
-                                arduino_serial.flush()
-                                print(f"[Python] Sent: {msg} of relative time {timestamp}")
-                            except Exception as e:
-                                print(f"[Python] Write error: {e}")
+                        print("i got here")
+                        try:
+                            msg = f"{left},{right}\n"
+                            arduino_serial.write(msg.encode('utf-8'))
+                            arduino_serial.flush()
+                            print(f"[Python] Sent: {msg} of relative time {timestamp}")
+                        except Exception as e:
+                            print(f"[Python] Write error: {e}")
 
             time.sleep(0.01)
             
