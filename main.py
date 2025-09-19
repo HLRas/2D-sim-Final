@@ -69,6 +69,7 @@ def arduino_thread():
 
                     #print(wheel_speed_queue[-1][2])
                     #print(dt)
+                    time.sleep(0.001)
                     left, right, timestamp = find_closest(wheel_speed_queue, dt)
                     
                     # Always remove data from queue (either send or discard)
