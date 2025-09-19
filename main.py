@@ -39,7 +39,7 @@ def arduino_thread():
 
     # Initialize Arduino connection to specific port
     try:
-        arduino_serial = serial.Serial('/dev/ttyACM0', 115200, timeout=0.1)
+        arduino_serial = serial.Serial('/dev/ttyACM0', 115200, timeout=0)
         time.sleep(2) # Wait for the Arduino to reset after connection
         print("[Arduino] Connected to /dev/ttyACM0")
     except Exception as e:
@@ -223,6 +223,7 @@ def run(clock, car, game_map, caption):
         receiver_thread.start()
 
         if ENABLE_ARDUINO:
+            print("hello")
             if arduino_comm_thread is None:
                 arduino_comm_thread = threading.Thread(target=arduino_thread, daemon=True)
                 arduino_comm_thread.start()
