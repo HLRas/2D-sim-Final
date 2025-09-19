@@ -1,0 +1,34 @@
+"""Configuration constants for the car simulation"""
+
+# Colors
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+RED = (255, 0, 0)
+GREEN = (0, 255, 0)
+BLUE = (0, 0, 255)
+YELLOW = (255, 255, 0)
+PURPLE = (128, 0, 128)
+ORANGE = (255, 165, 0)
+GREY = (128, 128, 128)
+TURQUOISE = (64, 224, 208)
+
+# Screen settings
+SCREEN_WIDTH = 900
+SCREEN_HEIGHT = 750
+CUBE_SIZE = 25
+FPS = 120
+
+# Car physics
+CAR_ACCELERATION = 20.0
+CAR_FRICTION = 8.0
+MAX_WHEEL_SPEED = 2.6
+TURN_RATE = 12
+CAR_WIDTH = 75
+CAR_LENGTH = 100
+WHEEL_RADIUS = 10 # consider changing to 16
+
+# Pathfinding
+STRAIGHT_COST = 10
+DIAGONAL_COST = 14
+SPLINE_SMOOTHNESS = 1000
+PATH_WIDTH = 2
