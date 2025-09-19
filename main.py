@@ -245,7 +245,7 @@ def run(clock, car, game_map, caption):
 
         # Immediately get the wheel speeds and queue them
         speeds = car.get_speeds()
-        queue_wheel_speeds(speeds[0], speeds[1], time.time())
+        queue_wheel_speeds(speeds[0], speeds[1], time.time()-start_time_follow)
         
         # --- Check for received coordinates (headless only) ---
         if HEADLESS_MODE and not coordinate_processed:
