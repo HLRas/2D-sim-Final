@@ -64,9 +64,10 @@ def arduino_thread():
                     
                     new_t = time.time()
                     dt = new_t - start_time
-                    
-                    print(dt)
-                    print(len(wheel_speed_queue))
+                    if len(wheel_speed_queue) < 40:
+
+                        print(dt)
+                        print(len(wheel_speed_queue))
                     left, right, timestamp = find_closest(wheel_speed_queue, dt)
                     #print(wheel_speed_queue)
                     print(left)
