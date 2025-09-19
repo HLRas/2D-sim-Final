@@ -63,7 +63,7 @@ def arduino_thread():
                         print(f"[Python] Read error: {e}")
                     
                     new_t = time.time()
-                    dt = new_t - start_time
+                    dt = new_t - start_time_follow
                     if len(wheel_speed_queue) < 40:
 
                         print(dt)
