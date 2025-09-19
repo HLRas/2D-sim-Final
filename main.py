@@ -363,6 +363,7 @@ def run(clock, car, game_map, caption):
                     # ...
 
                     print("[DEBUG] Simulation completed successfully!")
+                    print(wheel_speed_queue)
                     pygame.quit()
                     return
             else:
