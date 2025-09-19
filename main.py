@@ -30,7 +30,7 @@ arduino_lock = threading.Lock()
 arduino_comm_thread = None
 
 # Starting time of auto-follow
-start_time_follow = time.time()
+start_time_follow = 0
 restarted = True
 
 def arduino_thread():
@@ -51,43 +51,43 @@ def arduino_thread():
         if restarted:
             restarted = False
             start_time = time.time()
+        if start_time_follow != 0:
+            try:
+                if arduino_serial:
+                    try:
+                        if arduino_serial.in_waiting > 0:
+                            incoming_data = arduino_serial.readline().decode('utf-8').strip()
+                            if incoming_data:
+                                print(f"[Arduino] Received: {incoming_data}")
+                    except Exception as e:
+                        print(f"[Python] Read error: {e}")
+                    
+                    new_t = time.time()
+                    dt = new_t - start_time
+                    
+                    
+                    left, right, timestamp = find_closest(wheel_speed_queue, dt)
+                    #print(wheel_speed_queue)
+                    print(left)
+                    print(timestamp)
+                    print(dt)
+                    # Always remove data from queue (either send or discard)
+                    with arduino_lock:
+                        if left:
+                            
+                            try:
+                                msg = f"{left},{right}\n"
+                                arduino_serial.write(msg.encode('utf-8'))
+                                arduino_serial.flush()
+                                print(f"[Python] Sent: {msg} of relative time {timestamp}")
+                            except Exception as e:
+                                print(f"[Python] Write error: {e}")
 
-        try:
-            if arduino_serial:
-                try:
-                    if arduino_serial.in_waiting > 0:
-                        incoming_data = arduino_serial.readline().decode('utf-8').strip()
-                        if incoming_data:
-                            print(f"[Arduino] Received: {incoming_data}")
-                except Exception as e:
-                    print(f"[Python] Read error: {e}")
+                time.sleep(0.01)
                 
-                new_t = time.time()
-                dt = new_t - start_time
-                
-                
-                left, right, timestamp = find_closest(wheel_speed_queue, dt)
-                #print(wheel_speed_queue)
-                print(left)
-                print(timestamp)
-                print(dt)
-                # Always remove data from queue (either send or discard)
-                with arduino_lock:
-                    if left:
-                        
-                        try:
-                            msg = f"{left},{right}\n"
-                            arduino_serial.write(msg.encode('utf-8'))
-                            arduino_serial.flush()
-                            print(f"[Python] Sent: {msg} of relative time {timestamp}")
-                        except Exception as e:
-                            print(f"[Python] Write error: {e}")
-
-            time.sleep(0.01)
-            
-        except Exception as e:
-            #print(f"[Python] Failed: {e}")
-            pass
+            except Exception as e:
+                #print(f"[Python] Failed: {e}")
+                pass
             
 
 def tcp_receiver_thread():
@@ -156,8 +156,7 @@ def headless_handling(headless):
 
 def queue_wheel_speeds(left_speed, right_speed, time_since_pathfollow):
     """Queue wheel speeds for sending to Arduino"""
-    if left_speed != 0:
-        wheel_speed_queue.append((left_speed, right_speed, time_since_pathfollow))
+    wheel_speed_queue.append((left_speed, right_speed, time_since_pathfollow))
 
 def handle_automated_pathfinding(frame_count, game_map : Map, car : Car):
     """Handle automated pathfinding setup for headless mode"""
