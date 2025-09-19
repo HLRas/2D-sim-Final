@@ -67,6 +67,7 @@ def arduino_thread():
                 
                 
                 left, right, timestamp = find_closest(wheel_speed_queue, dt)
+                print("i got here")
                 # Always remove data from queue (either send or discard)
                 with arduino_lock:
                     if left:
@@ -223,7 +224,6 @@ def run(clock, car, game_map, caption):
         receiver_thread.start()
 
         if ENABLE_ARDUINO:
-            print("hello")
             if arduino_comm_thread is None:
                 arduino_comm_thread = threading.Thread(target=arduino_thread, daemon=True)
                 arduino_comm_thread.start()
