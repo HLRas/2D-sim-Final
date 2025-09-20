@@ -31,7 +31,12 @@ arduino_comm_thread = None
 
 # Starting time of auto-follow
 start_time_follow = 0
+
+# Set to true each time a new coord is sent
 restarted = True
+
+# Set to true if vehicle should stop
+stop = False
 
 def arduino_thread():
     """Thread to handle Arduino communication"""
@@ -66,11 +71,11 @@ def arduino_thread():
                     new_t = time.time()
                     dt = new_t - start_time_follow
                     
-
-                    #print(wheel_speed_queue[-1][2])
-                    #print(dt)
                     time.sleep(0.001)
-                    left, right, timestamp = find_closest(wheel_speed_queue, dt)
+                    if not stop:
+                        left, right, timestamp = find_closest(wheel_speed_queue, dt)
+                    else:
+                        left, right = (0.0, 0.0)
                     
                     # Always remove data from queue (either send or discard)
                     with arduino_lock:
@@ -217,7 +222,7 @@ def run_simulation(layout_type):
     run(clock, car, game_map, caption)
 
 def run(clock, car, game_map, caption):
-    global received_coords, last_coord_time, receiver_thread, arduino_comm_thread
+    global received_coords, last_coord_time, receiver_thread, arduino_comm_thread, stop
 
     # Performance tracking
     frame_count = 0
@@ -357,6 +362,7 @@ def run(clock, car, game_map, caption):
             if space.is_car_in_space(car):
                 if not space.occupied:
                     space.set_occupied(True, game_map.cubes)
+                    stop = True # stop the car!
                     print(f"[DEBUG] SUCCESS! Car parked in space at frame {frame_count}!")
                     print(f"[DEBUG] Final car position: ({car.get_pos()})")
 
