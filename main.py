@@ -270,7 +270,7 @@ def run(clock, car, game_map, caption):
                 # Execute pathfinding once after receiving coordinates
                 # Set start position
                 car_center = car.get_rect().center
-                print("[DEBUG] Car center after position update: {car_center}")
+                print(f"[DEBUG] Car center after position update: {car_center}")
                 cube = game_map.get_cube(car_center)
                 if cube:
                     if game_map.start:
