@@ -232,7 +232,7 @@ def run(clock, car, game_map, caption):
 
         receiver_thread = threading.Thread(target=tcp_receiver_thread, daemon=True)
         receiver_thread.start()
-
+        receiver_thread.join()
         if ENABLE_ARDUINO:
             if arduino_comm_thread is None:
                 arduino_comm_thread = threading.Thread(target=arduino_thread, daemon=True)
