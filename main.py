@@ -253,7 +253,7 @@ def run_simulation(layout_type):
         # Print periodic status updates in headless mode
         if HEADLESS_MODE and frame_count % 500 == 0:
             status = "Carrot" if car.carrot_following else "Cross-Track" if car.cross_following else "Manual"
-            print(f"[DEBUG] Frame {frame_count}: Car at ({car.get_pos:.1f}), Mode: {status}")
+            print(f"[DEBUG] Frame {frame_count}: Car at ({car.get_pos()}), Mode: {status}")
 
         # Handle events (only in GUI mode)
         if not HEADLESS_MODE:
