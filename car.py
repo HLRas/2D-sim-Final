@@ -36,8 +36,8 @@ class Car:
         self.max_wheel_speed = MAX_WHEEL_SPEED  # Direct linear speed limit (pixels/s)
 
         # Wheel speeds (linear speeds in pixels/s)
-        self.wheel_L_speed = 200.0 # pixels/s
-        self.wheel_R_speed = 200.0 # pixels/s
+        self.wheel_L_speed = 0.0 # pixels/s
+        self.wheel_R_speed = 0.0 # pixels/s
 
         # Vehicle properties
         self.speed = 0.0 # total speed pixels/s
