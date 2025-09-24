@@ -235,6 +235,7 @@ def run(clock, car, game_map, caption):
         receiver_thread.join()
         if ENABLE_ARDUINO:
             if arduino_comm_thread is None:
+                print("should work???")
                 arduino_comm_thread = threading.Thread(target=arduino_thread, daemon=True)
                 arduino_comm_thread.start()
         else:
