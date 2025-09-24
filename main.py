@@ -9,6 +9,7 @@ import serial
 from car import Car
 from map_generation import Map
 from config import *
+import bisect
 
 # Default command-line arguments
 HEADLESS_MODE = 0
@@ -20,19 +21,30 @@ ENABLE_ARDUINO = 0
 received_coords = None
 last_coord_time = 0
 coord_lock = threading.Lock()
+receiver_thread = None
 
 # --- Arduino Serial Communication for wheel speeds ---
 arduino_serial = None
 wheel_speed_queue = []
 arduino_lock = threading.Lock()
+arduino_comm_thread = None
+
+# Starting time of auto-follow
+start_time_follow = 0
+
+# Set to true each time a new coord is sent
+restarted = True
+
+# Set to true if vehicle should stop
+stop = False
 
 def arduino_thread():
     """Thread to handle Arduino communication"""
-    global arduino_serial, wheel_speed_queue
+    global arduino_serial, wheel_speed_queue, restarted
 
     # Initialize Arduino connection to specific port
     try:
-        arduino_serial = serial.Serial('/dev/ttyACM0', 9600, timeout=0.1)
+        arduino_serial = serial.Serial('/dev/ttyACM0', 115200, timeout=0)
         time.sleep(2) # Wait for the Arduino to reset after connection
         print("[Arduino] Connected to /dev/ttyACM0")
     except Exception as e:
@@ -40,9 +52,48 @@ def arduino_thread():
         print("[Arduino] Running in simulation-only mode (no Arduino communication)")
         arduino_serial = None
 
-    # Handle the coming inputs...
-    last_sent_speeds = (0.0, 0.0)
-    last_send_time = time.time()
+    while True:
+        if restarted:
+            restarted = False
+            # remember to add new time for closed loop
+
+        if start_time_follow != 0:
+            try:
+                if arduino_serial:
+                    try:
+                        if arduino_serial.in_waiting > 0:
+                            incoming_data = arduino_serial.readline().decode('utf-8').strip()
+                            if incoming_data:
+                                print(f"[Arduino] Received: {incoming_data}")
+                    except Exception as e:
+                        print(f"[Python] Read error: {e}")
+                    
+                    new_t = time.time()
+                    dt = new_t - start_time_follow
+                    
+                    time.sleep(0.001)
+                    if not stop:
+                        left, right, timestamp = find_closest(wheel_speed_queue, dt)
+                    else:
+                        left, right = (0.0, 0.0)
+                    
+                    # Always remove data from queue (either send or discard)
+                    with arduino_lock:
+                        #if left:
+                        try:
+                            msg = f"{left:.3f},{right:.3f}\n"
+                            arduino_serial.write(msg.encode('utf-8'))
+                            arduino_serial.flush()
+                            print(f"[Python] Sent: {msg} of relative time {timestamp}")
+                        except Exception as e:
+                            print(f"[Python] Write error: {e}")
+
+                time.sleep(0.01)
+                
+            except Exception as e:
+                #print(f"[Python] Failed: {e}")
+                pass
+            
 
 def tcp_receiver_thread():
     global received_coords
@@ -108,13 +159,14 @@ def headless_handling(headless):
     if headless:
         os.environ['SDL_VIDEODRIVER'] = 'dummy'
 
-def queue_wheel_speeds(left_speed, right_speed):
+def queue_wheel_speeds(left_speed, right_speed, time_since_pathfollow):
     """Queue wheel speeds for sending to Arduino"""
-    with arduino_lock:
-        wheel_speed_queue.append((left_speed, right_speed))
+    if start_time_follow != 0:
+        wheel_speed_queue.append((left_speed, right_speed, time_since_pathfollow))
 
 def handle_automated_pathfinding(frame_count, game_map : Map, car : Car):
     """Handle automated pathfinding setup for headless mode"""
+    global start_time_follow
     if not AUTOPATH_FOLLOW:
         return False
     
@@ -135,6 +187,7 @@ def handle_automated_pathfinding(frame_count, game_map : Map, car : Car):
                 print(f"[DEBUG] Frame {frame_count}: Auto-set start position at ({car.get_pos()})")
         
         elif frame_count == 550: # Start pathfinding after start is set
+            start_time_follow = time.time()
             if game_map.start:
                 nearest_space = game_map._find_nearest_parking_space(car)
                 if nearest_space and nearest_space.target_cube:
@@ -145,11 +198,11 @@ def handle_automated_pathfinding(frame_count, game_map : Map, car : Car):
 
                     if path_found:
                         if PATHFOLLOW_METHOD == 0: # Cross track
-                            car.cross_start_following(game_map.pathfinder.get_smooth_points())
-                            print(f"[DEBUG] Frame {frame_count}: Auto-started cross-track pathfinding to parking space")
+                            car.cross_start_following(game_map.pathfinder.path_points)
+                            print(f"[DEBUG] {frame_count}: Auto-started cross-track pathfinding to parking space")
                         else: # Default to carrot
-                            car.carrot_start_following(game_map.pathfinder.get_smooth_points())
-                            print(f"[DEBUG] Frame {frame_count}: Auto-started carrot pathfinding to parking space")
+                            car.carrot_start_following(game_map.pathfinder.path_points)
+                            print(f"[DEBUG] {frame_count}: Auto-started carrot pathfinding to parking space")
                     else:
                         print(f"[DEBUG] Frame {frame_count}: Pathfinding failed!")
     
@@ -157,9 +210,8 @@ def handle_automated_pathfinding(frame_count, game_map : Map, car : Car):
 
 def run_simulation(layout_type):
     """Run the simulation with the speified layout type"""
-    global received_coords, last_coord_time
     game_map = Map(layout_type=layout_type)
-    car = Car(50,700)
+    car = Car(50,50)
 
     #Set up display
     layout_names = ["Default Layout", "Empty Layout", "Minimal Layout"]
@@ -167,19 +219,24 @@ def run_simulation(layout_type):
     pygame.display.set_caption(caption)
     clock = pygame.time.Clock()
 
+    run(clock, car, game_map, caption)
+
+def run(clock, car, game_map, caption):
+    global received_coords, last_coord_time, receiver_thread, arduino_comm_thread, stop
+
     # Performance tracking
     frame_count = 0
 
     # Start TCP receiver thread in headless mode
-    if HEADLESS_MODE:
+    if HEADLESS_MODE and receiver_thread is None:
 
         receiver_thread = threading.Thread(target=tcp_receiver_thread, daemon=True)
         receiver_thread.start()
-
+        receiver_thread.join()
         if ENABLE_ARDUINO:
-            arduino_comm_thread = threading.Thread(target=arduino_thread, daemon=True)
-            arduino_comm_thread.start()
-            pass
+            if arduino_comm_thread is None:
+                arduino_comm_thread = threading.Thread(target=arduino_thread, daemon=True)
+                arduino_comm_thread.start()
         else:
             print("[Arduino] Communication disabled - running simulation only")
         print("[DEBUG] Starting headless simulation...")
@@ -194,6 +251,10 @@ def run_simulation(layout_type):
         dt = clock.tick(FPS) / 1000.0 # Delta time in seconds
         frame_count += 1
 
+        # Immediately get the wheel speeds and queue them
+        speeds = car.get_speeds()
+        queue_wheel_speeds(speeds[0], speeds[1], time.time()-start_time_follow)
+        
         # --- Check for received coordinates (headless only) ---
         if HEADLESS_MODE and not coordinate_processed:
             with coord_lock:
@@ -209,7 +270,7 @@ def run_simulation(layout_type):
                 # Execute pathfinding once after receiving coordinates
                 # Set start position
                 car_center = car.get_rect().center
-                print("[DEBUG] Car center after position update: {car_center}")
+                print(f"[DEBUG] Car center after position update: {car_center}")
                 cube = game_map.get_cube(car_center)
                 if cube:
                     if game_map.start:
@@ -232,10 +293,10 @@ def run_simulation(layout_type):
                     path_found = game_map.pathfinder.pathfind(game_map.cubes, game_map.start, game_map.end, game_map.mark_dirty)
                     if path_found:
                         if PATHFOLLOW_METHOD == 0: # Cross Track
-                            car.cross_start_following(game_map.pathfinder.get_smooth_points())
+                            car.cross_start_following(game_map.pathfinder.path_points)
                             print(f"[Cross] Auto-started cross-track pathfinding to parking space")
                         else: # Default to carrot
-                            car.carrot_start_following(game_map.pathfinder.get_smooth_points())
+                            car.carrot_start_following(game_map.pathfinder.path_points)
                             print(f"[Carrot] Auto started carrot pathfinding to parking space")
                     else:
                         print("[DEBUG] Pathfinding failed!")
@@ -251,7 +312,7 @@ def run_simulation(layout_type):
             auto_pathfinding_started = handle_automated_pathfinding(frame_count, game_map, car)
 
         # Print periodic status updates in headless mode
-        if HEADLESS_MODE and frame_count % 100 == 0:
+        if HEADLESS_MODE and frame_count % 500 == 0:
             status = "Carrot" if car.carrot_following else "Cross-Track" if car.cross_following else "Manual"
             print(f"[DEBUG] Frame {frame_count}: Car at ({car.get_pos()}), Mode: {status}")
 
@@ -278,9 +339,7 @@ def run_simulation(layout_type):
                     if event.key == pygame.K_F1:
                         print(f"Car position: ({car.x:.1f}, {car.y:.1f})")
                         print(f"Car angle: {math.degrees(car.angle):.1f}°")
-                        print(f"Wheel speeds: L={car.wheel_L_speed:.2f}, R={car.wheel_R_speed:.2f} pixels/s")
-                        friction_info = car.get_friction_info()
-                        print(f"Friction: L={friction_info['left_friction_type']}, R={friction_info['right_friction_type']}")
+                        print(f"Wheel speeds: L={car.wheel_L:.2f}, R={car.wheel_R:.2f}")
                         print(f"Carrot following: {car.carrot_following}")
                         print(f"Cross-track following: {car.cross_following}")
 
@@ -297,24 +356,21 @@ def run_simulation(layout_type):
 
         # Update car physics
         car.find_next_pos(dt)
-
-        # Send wheel speeds to Arduino when they change (headless mode only)
-        if HEADLESS_MODE and ENABLE_ARDUINO:
-            speeds = car.get_speeds()
-            queue_wheel_speeds(speeds[0], speeds[1])
         
         # Check parking status
         for space in game_map.parking_spaces:
             if space.is_car_in_space(car):
                 if not space.occupied:
                     space.set_occupied(True, game_map.cubes)
+                    stop = True # stop the car!
                     print(f"[DEBUG] SUCCESS! Car parked in space at frame {frame_count}!")
                     print(f"[DEBUG] Final car position: ({car.get_pos()})")
 
                     # Send zero speeds to Arduino
                     # ...
 
-                    print("Headless simulation completed successfully!")
+                    print("[DEBUG] Simulation completed successfully!")
+                    print(wheel_speed_queue)
                     pygame.quit()
                     return
             else:
@@ -337,6 +393,11 @@ def run_simulation(layout_type):
             pygame.display.set_caption(f"{caption} - FPS: {fps:.1f}{status} - ESC: Menu")
 
             pygame.display.flip()               
+
+def find_closest(data, timestamp, index=2):
+    """Finds the closest data value to the specified timestamp"""
+    timestamps = [tp[index] for tp in data]
+    return data[bisect.bisect_left(timestamps, timestamp)]
 
 
 def main():
