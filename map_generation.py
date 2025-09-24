@@ -192,7 +192,7 @@ class Map:
                 
                 # If path was found, start automatic path following
                 if path_found and self.pathfinder.has_path():
-                    path_points = self.pathfinder.get_path_points()
+                    path_points = self.pathfinder.get_smooth_points()
                     if path_points:
                         car.carrot_start_following(path_points)
                         print("Starting automatic path following to parking space!")
@@ -208,7 +208,7 @@ class Map:
                 
                 # If path was found, start cross-track error path following
                 if path_found and self.pathfinder.has_path():
-                    path_points = self.pathfinder.get_path_points()
+                    path_points = self.pathfinder.get_smooth_points()
                     if path_points:
                         car.cross_start_following(path_points)
                         print("Starting cross-track error path following to parking space!")

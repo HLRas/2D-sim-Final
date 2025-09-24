@@ -15,6 +15,8 @@ class AStarPathfinder:
         self.path_points = None
         self.path_surface = pygame.Surface((screen_width, screen_height), pygame.SRCALPHA)
 
+        self.smooth_points = None
+
     def heuristic(self,p1,p2):
         """Octile distance heuristic for A*"""
         x1, y1 = p1
@@ -114,6 +116,8 @@ class AStarPathfinder:
     def draw_smooth_path(self, points):
         """Draw smooth spline path"""
         if len(points) < 2:
+            # If we don't have enough points for smoothing, just use the raw points
+            self.smooth_points = points
             return
         
         self.path_surface.fill((0,0,0,0))
@@ -125,6 +129,8 @@ class AStarPathfinder:
             k = min(3, len(x) -1)
 
             if k<1:
+                # Not enough points for spline interpolation, use raw points
+                self.smooth_points = points
                 return
             
             tck, u = splprep([x,y], s=SPLINE_SMOOTHNESS, k=k)
@@ -132,12 +138,14 @@ class AStarPathfinder:
             x_fine, y_fine = splev(u_fine, tck)
 
             coords = [(int(x_fine[i]), int(y_fine[i])) for i in range(len(x_fine))]
-
+            self.smooth_points = coords
             for i in range(len(coords) -1):
                 pygame.draw.line(self.path_surface, RED, coords[i], coords[i+1], PATH_WIDTH)
 
         except Exception as e:
-            # Fallback to simeple line drawing
+            # Fallback to simple line drawing and use raw points for path following
+            print(f"[Pathfinder] Spline smoothing failed: {e}, using raw path points")
+            self.smooth_points = points
             for i in range(len(points)-1):
                 pygame.draw.line(self.path_surface, RED, points[i], points[i+1], PATH_WIDTH)
 
@@ -152,6 +160,7 @@ class AStarPathfinder:
         
         self.path_surface.fill((0,0,0,0))
         self.path_points = None
+        self.smooth_points = None
 
     def get_path_surface(self):
         """Get the path surface for drawing"""
@@ -164,3 +173,7 @@ class AStarPathfinder:
     def get_path_points(self):
         """Get the current path points"""
         return self.path_points
+    
+    def get_smooth_points(self):
+        """Get the smooth spline path points for path following"""
+        return self.smooth_points if self.smooth_points else self.path_points

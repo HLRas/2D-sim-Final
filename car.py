@@ -13,21 +13,37 @@ class Car:
 
         # Movement properties
         self.wheel_acceleration = CAR_ACCELERATION
-        self.wheel_friction = CAR_FRICTION
-        self.max_angular_wheelspeed = MAX_WHEEL_SPEED
+        self.static_friction = CAR_FRICTION * STATIC_FRICTION_RATIO  # Static friction coefficient
+        self.rolling_friction = CAR_FRICTION * ROLLING_FRICTION_RATIO  # Rolling friction coefficient
+        self.static_threshold = STATIC_THRESHOLD  # Speed threshold below which static friction applies
+        self.max_wheel_speed = MAX_WHEEL_SPEED  # Direct linear speed limit (pixels/s)
 
-        # Wheel speeds
-        self.wheel_L = 0.0 # angular speed
-        self.wheel_R = 0.0 # angular speed
+        # Wheel speeds (linear speeds in pixels/s)
         self.wheel_L_speed = 0.0 # pixels/s
+        self.prev_wheel_L = 0.0
         self.wheel_R_speed = 0.0 # pixels/s
+        self.prev_wheel_R = 0.0
 
         # Vehicle properties
         self.speed = 0.0 # total speed pixels/s
         self.angle = 0.0 # radians
         self.width = CAR_WIDTH
         self.length = CAR_LENGTH
-        self.wheelrad = WHEEL_RADIUS # pixels
+
+        # Visual representation
+        self._create_surface()
+        self.screen = pygame.display.get_surface()
+        self.max_wheel_speed = MAX_WHEEL_SPEED  # Direct linear speed limit (pixels/s)
+
+        # Wheel speeds (linear speeds in pixels/s)
+        self.wheel_L_speed = 200.0 # pixels/s
+        self.wheel_R_speed = 200.0 # pixels/s
+
+        # Vehicle properties
+        self.speed = 0.0 # total speed pixels/s
+        self.angle = 0.0 # radians
+        self.width = CAR_WIDTH
+        self.length = CAR_LENGTH
 
         # Visual representation
         self._create_surface()
@@ -52,13 +68,14 @@ class Car:
         self.cross_following = False
         self.cross_path_points = []
         self.cross_index = 0
-        self.cross_base_distance = 25 # Minimum lookahead distance
+        self.cross_base_distance = 100 # Minimum lookahead distance
         self.cross_arrival_threshold = 30
-        self.cross_max_turn_rate = 2.5 # Max turn rate in rad
-        self.cross_base_speed = 1.7
-        self.cross_turn_pen_coeff = 0.05 # Turn penalty coefficient
-        self.cross_min_target_speed = 0.2
-        self.cross_command_coeff = 0.5 # Scale wheel commands by this
+        self.cross_max_turn_rate = 250 # Max turn rate in rad
+        self.cross_heading_scale = 100
+        self.cross_base_speed = 200 # p/s
+        self.cross_turn_pen_coeff = 0.0 # Turn penalty coefficient
+        self.cross_min_target_speed = 150
+        self.cross_command_coeff = 1 # Scale wheel commands by this
 
     
     """===========================GENERAL FUNCTIONS==============================="""
@@ -90,25 +107,26 @@ class Car:
         """Get the position of the car"""
         return (self.x, self.y)
 
-    def apply_friction(self, dt): # Very jippo-y way of doing it
-        """Apply friction to the wheels"""
-        friction_force = self.wheel_friction *dt
+    def apply_friction(self, dt):
+        """Apply static and rolling friction to the wheels"""
+        
+        # Apply friction to left wheel
+        self.wheel_L_speed = self._apply_wheel_friction(self.wheel_L_speed, self.prev_wheel_L, dt)
+        
+        # Apply friction to right wheel
+        self.wheel_R_speed = self._apply_wheel_friction(self.wheel_R_speed, self.prev_wheel_R, dt)
 
-        # Left wheel friction
-        if abs(self.wheel_L) <= friction_force:
-            self.wheel_L = 0
-        elif self.wheel_L > 0:
-            self.wheel_L -= friction_force
+    def _apply_wheel_friction(self, wheel_speed, wheel_prevSpeed, dt):
+        if (abs(wheel_speed) == abs(wheel_prevSpeed)) and (abs(wheel_speed) > 1e-3):
+            speed = wheel_speed - self.rolling_friction*dt
+            if math.copysign(1, speed) == math.copysign(1, wheel_speed):
+                return speed
+            else:
+                return 0
         else:
-            self.wheel_L += friction_force
-
-        # Right wheel friction
-        if abs(self.wheel_R) <= friction_force:
-            self.wheel_R = 0
-        elif self.wheel_R > 0:
-            self.wheel_R -= friction_force
-        else:
-            self.wheel_R += friction_force
+            return wheel_speed
+        
+            
 
     def find_next_pos(self, dt):
         """Calculate and apply next position"""
@@ -117,20 +135,17 @@ class Car:
         prev_angle = self.angle
 
         # Apply friction
-        self.apply_friction(dt)
+        self.prev_wheel_L = self.wheel_L_speed
+        self.prev_wheel_R = self.wheel_R_speed
+        # self.apply_friction(dt)
 
-        # Calculate movement
-        self.wheel_L_speed = self.wheel_L * self.wheelrad
-        self.wheel_R_speed = self.wheel_R * self.wheelrad
-
-        self.speed = (self.wheel_L_speed + self.wheel_R_speed)/2
+        # Calculate movement - wheel speeds are directly in pixels/s
+        self.speed = (self.wheel_L_speed + self.wheel_R_speed) / 2
         self.angle += (self.wheel_R_speed - self.wheel_L_speed) / self.width * dt * TURN_RATE
         
-        """COME CHECK HERE FOR SPEED!!! ------------------------------------------"""
-        
-        # Calculate new position
-        new_x = self.x + self.speed * math.cos(self.angle) * dt * self.wheelrad 
-        new_y = self.y - self.speed * math.sin(self.angle) * dt * self.wheelrad
+        # Calculate new position using direct wheel speeds
+        new_x = self.x + self.speed * math.cos(self.angle) * dt
+        new_y = self.y - self.speed * math.sin(self.angle) * dt
 
         self.x, self.y = new_x, new_y
 
@@ -143,11 +158,11 @@ class Car:
         delta = self.wheel_acceleration * dt * (1 if accelerate else -1)
 
         if wheel == 'left':
-            self.wheel_L = max(-self.max_angular_wheelspeed, 
-                               min(self.wheel_L + delta, self.max_angular_wheelspeed))
+            self.wheel_L_speed = max(-self.max_wheel_speed, 
+                                   min(self.wheel_L_speed + delta, self.max_wheel_speed))
         elif wheel == 'right':
-            self.wheel_R = max(-self.max_angular_wheelspeed, 
-                              min(self.wheel_R + delta, self.max_angular_wheelspeed))
+            self.wheel_R_speed = max(-self.max_wheel_speed, 
+                                   min(self.wheel_R_speed + delta, self.max_wheel_speed))
             
     def get_rect(self):
         """Get the rectangle of the car"""
@@ -187,7 +202,28 @@ class Car:
         return
     
     def get_speeds(self):
-        return [self.wheel_L_speed * WHEEL_RADIUS * 2 /1000, self.wheel_R_speed *WHEEL_RADIUS * 2 /1000] # horrible but it works
+        """Get wheel speeds in m/s for Arduino communication"""
+        # Convert from pixels/s to m/s 
+        # Simple conversion factor - adjust as needed for your scale
+        pixels_to_meters = 1.0/500  # 1p = 2mm, 1000p = 2m (adjust as needed)
+        return [self.wheel_L_speed * pixels_to_meters, 
+                self.wheel_R_speed * pixels_to_meters]
+    
+    def get_friction_info(self):
+        """Get current friction state information for debugging"""
+        left_speed_mag = abs(self.wheel_L_speed)
+        right_speed_mag = abs(self.wheel_R_speed)
+        
+        left_friction_type = "static" if left_speed_mag <= self.static_threshold else "rolling"
+        right_friction_type = "static" if right_speed_mag <= self.static_threshold else "rolling"
+        
+        return {
+            "left_friction_type": left_friction_type,
+            "right_friction_type": right_friction_type,
+            "left_speed": self.wheel_L_speed,
+            "right_speed": self.wheel_R_speed,
+            "static_threshold": self.static_threshold
+        }
     """==========================================================================="""
 
     """==================CARROT FOLLOWING FUNCTIONS==============================="""
@@ -284,7 +320,7 @@ class Car:
         max_turn_rate = self.carrot_max_turn_rate
 
         """----------------WHERE DOES THIS 1.5 COME FROM?? ---------------------------------------"""
-        turn_command = max(-max_turn_rate, min(max_turn_rate, angle_diff * 1.5)) 
+        turn_command = max(-max_turn_rate, min(max_turn_rate, angle_diff)) 
 
         # Reduce turn penalty to maintain speed through curves
         turn_penalty = abs(turn_command) * self.carrot_turn_pen_coeff
@@ -431,7 +467,7 @@ class Car:
             return 0,0
         
         # PID gains for cte correction
-        kp = 0.02
+        kp = 0.0
 
         # Calculate angle to lookahead point
         dx = lookahead_point[0] - self.x
@@ -446,16 +482,17 @@ class Car:
             angle_diff += 2 * math.pi
 
         # Combine heading error and cte
+        
         max_turn_rate = self.cross_max_turn_rate
-        """----------------WHERE DOES THIS 1.5 COME FROM?? -----------------------"""
-        heading_command = max(-max_turn_rate, min(max_turn_rate, angle_diff * 1.5))
+        heading_command = max(-max_turn_rate, min(max_turn_rate, angle_diff * self.cross_heading_scale))
         cross_track_command = -cte * kp # Negative to correct towards path
-
+        
+        
         total_turn_command = heading_command + cross_track_command
         total_turn_command = max(-max_turn_rate, min(max_turn_rate, total_turn_command))
-
+        
         # Speed control
-        base_speed = self.carrot_base_speed
+        base_speed = self.cross_base_speed
         turn_penalty = abs(total_turn_command) * self.cross_turn_pen_coeff
         target_speed = max(self.cross_min_target_speed, base_speed - turn_penalty)
 
@@ -496,6 +533,10 @@ class Car:
             # Find lookahead point 
             lookahead_point = self._cross_closest_lookahead()
 
+            # Draw lookahead point
+            pygame.draw.circle(pygame.display.get_surface(), RED, lookahead_point,5)
+            pygame.display.flip()
+
             if lookahead_point:
                 # Calculate cross-track error
                 cte = self._cross_calc_error(closest_point)
@@ -510,29 +551,34 @@ class Car:
     """=====================GENERAL PATH FOLLOWING FUNCTIONS======================"""
     def _apply_wheel_commands(self, left_cmd, right_cmd, dt):
         """Apply wheel speed commands smoothly for any path following method"""
-        # Limit command values
-        max_cmd = self.max_angular_wheelspeed
-        left_cmd = max(-max_cmd, min(max_cmd, left_cmd))
-        right_cmd = max(-max_cmd, min(max_cmd, right_cmd))
+        # Commands are already in the correct units (pixels/s equivalent)
+        # Just scale them to reasonable speeds and apply limits
+        max_cmd = self.max_wheel_speed
+        left_target = left_cmd  # Scale factor to convert from path command to pixels/s
+        right_target = right_cmd  # Scale factor to convert from path command to pixels/s
+        
+        # Limit target values
+        left_target = max(-max_cmd, min(max_cmd, left_target))
+        right_target = max(-max_cmd, min(max_cmd, right_target))
 
-        # Smooth transistion to target speeds
-        speed_change_rate= self.wheel_acceleration*dt # Removed coeef of 2
+        # Smooth transition to target speeds
+        speed_change_rate = self.wheel_acceleration * dt
 
         # Left wheel
-        if abs(left_cmd - self.wheel_L) <= speed_change_rate:
-            self.wheel_L = left_cmd
-        elif left_cmd > self.wheel_L:
-            self.wheel_L += speed_change_rate
+        if abs(left_target - self.wheel_L_speed) <= speed_change_rate:
+            self.wheel_L_speed = left_target
+        elif left_target > self.wheel_L_speed:
+            self.wheel_L_speed += speed_change_rate
         else:
-            self.wheel_L -= speed_change_rate
+            self.wheel_L_speed -= speed_change_rate
 
         # Right wheel
-        if abs(right_cmd - self.wheel_R) <= speed_change_rate:
-            self.wheel_R = right_cmd
-        elif right_cmd > self.wheel_R:
-            self.wheel_R += speed_change_rate
+        if abs(right_target - self.wheel_R_speed) <= speed_change_rate:
+            self.wheel_R_speed = right_target
+        elif right_target > self.wheel_R_speed:
+            self.wheel_R_speed += speed_change_rate
         else:
-            self.wheel_R -= speed_change_rate
+            self.wheel_R_speed -= speed_change_rate
 
     def update_path_following(self, dt):
         if self.carrot_following:

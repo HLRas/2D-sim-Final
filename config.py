@@ -19,10 +19,13 @@ CUBE_SIZE = 25
 FPS = 120
 
 # Car physics
-CAR_ACCELERATION = 20.0
-CAR_FRICTION = 8.0
-MAX_WHEEL_SPEED = 2.6
-TURN_RATE = 12
+CAR_ACCELERATION = 400.0 #pixels/s^2 (=0.8m/s^2)
+CAR_FRICTION = 0.0  # Base friction value
+STATIC_FRICTION_RATIO = 0.8  # Fraction of CAR_FRICTION used for static friction
+ROLLING_FRICTION_RATIO = 0.2  # Fraction of CAR_FRICTION used for rolling friction
+STATIC_THRESHOLD = 50.0  # Speed threshold for static vs rolling friction (pixels/s)
+MAX_WHEEL_SPEED = 300 # pixels/s (=0.6m/s)
+TURN_RATE = 1
 CAR_WIDTH = 75
 CAR_LENGTH = 100
 WHEEL_RADIUS = 10 # consider changing to 16

@@ -145,10 +145,10 @@ def handle_automated_pathfinding(frame_count, game_map : Map, car : Car):
 
                     if path_found:
                         if PATHFOLLOW_METHOD == 0: # Cross track
-                            car.cross_start_following(game_map.pathfinder.path_points)
+                            car.cross_start_following(game_map.pathfinder.get_smooth_points())
                             print(f"[DEBUG] {frame_count}: Auto-started cross-track pathfinding to parking space")
                         else: # Default to carrot
-                            car.carrot_start_following(game_map.pathfinder.path_points)
+                            car.carrot_start_following(game_map.pathfinder.get_smooth_points())
                             print(f"[DEBUG] {frame_count}: Auto-started carrot pathfinding to parking space")
                     else:
                         print(f"[DEBUG] Frame {frame_count}: Pathfinding failed!")
@@ -159,7 +159,7 @@ def run_simulation(layout_type):
     """Run the simulation with the speified layout type"""
     global received_coords, last_coord_time
     game_map = Map(layout_type=layout_type)
-    car = Car(50,50)
+    car = Car(50,700)
 
     #Set up display
     layout_names = ["Default Layout", "Empty Layout", "Minimal Layout"]
@@ -232,10 +232,10 @@ def run_simulation(layout_type):
                     path_found = game_map.pathfinder.pathfind(game_map.cubes, game_map.start, game_map.end, game_map.mark_dirty)
                     if path_found:
                         if PATHFOLLOW_METHOD == 0: # Cross Track
-                            car.cross_start_following(game_map.pathfinder.path_points)
+                            car.cross_start_following(game_map.pathfinder.get_smooth_points())
                             print(f"[Cross] Auto-started cross-track pathfinding to parking space")
                         else: # Default to carrot
-                            car.carrot_start_following(game_map.pathfinder.path_points)
+                            car.carrot_start_following(game_map.pathfinder.get_smooth_points())
                             print(f"[Carrot] Auto started carrot pathfinding to parking space")
                     else:
                         print("[DEBUG] Pathfinding failed!")
@@ -278,7 +278,9 @@ def run_simulation(layout_type):
                     if event.key == pygame.K_F1:
                         print(f"Car position: ({car.x:.1f}, {car.y:.1f})")
                         print(f"Car angle: {math.degrees(car.angle):.1f}°")
-                        print(f"Wheel speeds: L={car.wheel_L:.2f}, R={car.wheel_R:.2f}")
+                        print(f"Wheel speeds: L={car.wheel_L_speed:.2f}, R={car.wheel_R_speed:.2f} pixels/s")
+                        friction_info = car.get_friction_info()
+                        print(f"Friction: L={friction_info['left_friction_type']}, R={friction_info['right_friction_type']}")
                         print(f"Carrot following: {car.carrot_following}")
                         print(f"Cross-track following: {car.cross_following}")
 
