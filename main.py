@@ -198,10 +198,10 @@ def handle_automated_pathfinding(frame_count, game_map : Map, car : Car):
 
                     if path_found:
                         if PATHFOLLOW_METHOD == 0: # Cross track
-                            car.cross_start_following(game_map.pathfinder.path_points)
+                            car.cross_start_following(game_map.pathfinder.smooth_points)
                             print(f"[DEBUG] {frame_count}: Auto-started cross-track pathfinding to parking space")
                         else: # Default to carrot
-                            car.carrot_start_following(game_map.pathfinder.path_points)
+                            car.carrot_start_following(game_map.pathfinder.smooth_points)
                             print(f"[DEBUG] {frame_count}: Auto-started carrot pathfinding to parking space")
                     else:
                         print(f"[DEBUG] Frame {frame_count}: Pathfinding failed!")
@@ -293,10 +293,10 @@ def run(clock, car, game_map, caption):
                     path_found = game_map.pathfinder.pathfind(game_map.cubes, game_map.start, game_map.end, game_map.mark_dirty)
                     if path_found:
                         if PATHFOLLOW_METHOD == 0: # Cross Track
-                            car.cross_start_following(game_map.pathfinder.path_points)
+                            car.cross_start_following(game_map.pathfinder.smooth_points)
                             print(f"[Cross] Auto-started cross-track pathfinding to parking space")
                         else: # Default to carrot
-                            car.carrot_start_following(game_map.pathfinder.path_points)
+                            car.carrot_start_following(game_map.pathfinder.smooth_points)
                             print(f"[Carrot] Auto started carrot pathfinding to parking space")
                     else:
                         print("[DEBUG] Pathfinding failed!")
