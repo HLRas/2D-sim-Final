@@ -146,10 +146,10 @@ def handle_automated_pathfinding(frame_count, game_map : Map, car : Car):
                     if path_found:
                         if PATHFOLLOW_METHOD == 0: # Cross track
                             car.cross_start_following(game_map.pathfinder.get_smooth_points())
-                            print(f"[DEBUG] {frame_count}: Auto-started cross-track pathfinding to parking space")
+                            print(f"[DEBUG] Frame {frame_count}: Auto-started cross-track pathfinding to parking space")
                         else: # Default to carrot
                             car.carrot_start_following(game_map.pathfinder.get_smooth_points())
-                            print(f"[DEBUG] {frame_count}: Auto-started carrot pathfinding to parking space")
+                            print(f"[DEBUG] Frame {frame_count}: Auto-started carrot pathfinding to parking space")
                     else:
                         print(f"[DEBUG] Frame {frame_count}: Pathfinding failed!")
     
@@ -251,7 +251,7 @@ def run_simulation(layout_type):
             auto_pathfinding_started = handle_automated_pathfinding(frame_count, game_map, car)
 
         # Print periodic status updates in headless mode
-        if HEADLESS_MODE and frame_count % 500 == 0:
+        if HEADLESS_MODE and frame_count % 100 == 0:
             status = "Carrot" if car.carrot_following else "Cross-Track" if car.cross_following else "Manual"
             print(f"[DEBUG] Frame {frame_count}: Car at ({car.get_pos()}), Mode: {status}")
 
