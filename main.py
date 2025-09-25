@@ -59,6 +59,7 @@ def arduino_thread():
     while True:
         if restarted:
             restarted = False
+            wheel_speed_queue.clear()
             # remember to add new time for closed loop
 
         if start_time_follow != 0:
@@ -113,27 +114,28 @@ def connect_tcp():
 
 def tcp_receiver_thread():
     global received_coords, request_pos
-    while request_pos: # If a new coordinate has been requested
-        try:
-            msg = jetbot_tcp.recv(21) # Receive exactly one message limited to 21 characters
-            if msg:
-                try:
-                    decoded = msg.decode("utf-8").strip()
-                    parts = decoded.split(",")
-                    x_, y_, or_ = map(float, parts)
-                    with coord_lock:
-                        received_coords = (x_, y_, or_)
-                    print(f"[Jetson] Received coordinate: {x_}, {y_}, Orientation: {or_}")
-                    request_pos = False # drop flag for requesting position
-                except Exception as e:
-                    print(f"[Jetson] Error parsing message: {msg} ({e})")
-            else:
-                print("[Jetson] No message received")
-        except Exception as e:
-            print(f"[Jetson] Socket error: {e}")
-    #finally:
-        #print("[Jetson] Closing connection after receiving first coordinate")
-        #jetbot_tcp.close()
+    while True:
+        if request_pos: # If a new coordinate has been requested
+            try:
+                msg = jetbot_tcp.recv(21) # Receive exactly one message limited to 21 characters
+                if msg:
+                    try:
+                        decoded = msg.decode("utf-8").strip()
+                        parts = decoded.split(",")
+                        x_, y_, or_ = map(float, parts)
+                        with coord_lock:
+                            received_coords = (x_, y_, or_)
+                        print(f"[Jetson] Received coordinate: {x_}, {y_}, Orientation: {or_}")
+                        request_pos = False # drop flag for requesting position
+                    except Exception as e:
+                        print(f"[Jetson] Error parsing message: {msg} ({e})")
+                else:
+                    print("[Jetson] No message received")
+            except Exception as e:
+                print(f"[Jetson] Socket error: {e}")
+            #finally:
+                #print("[Jetson] Closing connection after receiving first coordinate")
+                #jetbot_tcp.close()
     
 def get_args():
     """Get arguments from command-line"""
