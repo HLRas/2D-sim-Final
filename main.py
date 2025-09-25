@@ -19,9 +19,11 @@ ENABLE_ARDUINO = 0
 
 # --- TCP Client for receiving coordinates from Jetson (Headless only) ---
 received_coords = None
+jetbot_tcp = None
 last_coord_time = 0
 coord_lock = threading.Lock()
 receiver_thread = None
+request_pos = True
 
 # --- Arduino Serial Communication for wheel speeds ---
 arduino_serial = None
@@ -38,19 +40,21 @@ restarted = True
 # Set to true if vehicle should stop
 stop = False
 
-def arduino_thread():
-    """Thread to handle Arduino communication"""
-    global arduino_serial, wheel_speed_queue, restarted
-
-    # Initialize Arduino connection to specific port
+def connect_arduino():
+    """Connect arduino to jetbot via serial"""
+    global arduino_serial
     try:
         arduino_serial = serial.Serial('/dev/ttyACM0', 115200, timeout=0)
         time.sleep(2) # Wait for the Arduino to reset after connection
         print("[Arduino] Connected to /dev/ttyACM0")
+        return True
     except Exception as e:
-        print(f"[Arduino] Connection error: {e}")
-        print("[Arduino] Running in simulation-only mode (no Arduino communication)")
-        arduino_serial = None
+        print(f"[Arduino] Connection error: {e}, retrying...")
+        return False
+
+def arduino_thread():
+    """Thread to handle Arduino communication"""
+    global wheel_speed_queue, restarted
 
     while True:
         if restarted:
@@ -64,7 +68,7 @@ def arduino_thread():
                         if arduino_serial.in_waiting > 0:
                             incoming_data = arduino_serial.readline().decode('utf-8').strip()
                             if incoming_data:
-                                print(f"[Arduino] Received: {incoming_data}")
+                                print(f"[Python] Received: {incoming_data} from Arduino")
                     except Exception as e:
                         print(f"[Python] Read error: {e}")
                     
@@ -84,7 +88,7 @@ def arduino_thread():
                             msg = f"{left:.3f},{right:.3f}\n"
                             arduino_serial.write(msg.encode('utf-8'))
                             arduino_serial.flush()
-                            print(f"[Python] Sent: {msg} of relative time {timestamp}")
+                            print(f"[Python] Sent: {msg} of relative time {timestamp} to Arduino")
                         except Exception as e:
                             print(f"[Python] Write error: {e}")
 
@@ -94,36 +98,42 @@ def arduino_thread():
                 #print(f"[Python] Failed: {e}")
                 pass
             
-
-def tcp_receiver_thread():
-    global received_coords
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+def connect_tcp():
+    global jetbot_tcp
+    jetbot_tcp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
-        s.connect((socket.gethostname(), 1234))
+        jetbot_tcp.connect((socket.gethostname(), 1234))
         print("[Jetson] Connected, waiting 5 seconds")
         time.sleep(5)
-        print("[Jetson] Now receiving first coordinate")
-
-        msg = s.recv(21) # Receive exactly one message limited to 21 characters
-        if msg:
-            try:
-                decoded = msg.decode("utf-8").strip()
-                parts = decoded.split(",")
-                x_, y_, or_ = map(float, parts)
-                with coord_lock:
-                    received_coords = (x_, y_, or_)
-                print(f"[Jetson] Received coordinate: {x_}, {y_}, Orientation: {or_}")
-            except Exception as e:
-                print(f"[Jetson] Error parsing message: {msg} ({e})")
-        else:
-            print("[Jetson] No message received")
-
-        print("[Jetson] Closing connection after receiving first coordinate")
-
+        print("[Jetson] Now receiving first coordinate...")
+        return True
     except Exception as e:
-        print(f"[Jetson] Socket error: {e}")
-    finally:
-        s.close()
+        print("[Jetson] Failed to connect, retrying...")
+        return False
+
+def tcp_receiver_thread():
+    global received_coords, request_pos
+    while request_pos: # If a new coordinate has been requested
+        try:
+            msg = jetbot_tcp.recv(21) # Receive exactly one message limited to 21 characters
+            if msg:
+                try:
+                    decoded = msg.decode("utf-8").strip()
+                    parts = decoded.split(",")
+                    x_, y_, or_ = map(float, parts)
+                    with coord_lock:
+                        received_coords = (x_, y_, or_)
+                    print(f"[Jetson] Received coordinate: {x_}, {y_}, Orientation: {or_}")
+                    request_pos = False # drop flag for requesting position
+                except Exception as e:
+                    print(f"[Jetson] Error parsing message: {msg} ({e})")
+            else:
+                print("[Jetson] No message received")
+        except Exception as e:
+            print(f"[Jetson] Socket error: {e}")
+    #finally:
+        #print("[Jetson] Closing connection after receiving first coordinate")
+        #jetbot_tcp.close()
     
 def get_args():
     """Get arguments from command-line"""
@@ -210,6 +220,8 @@ def handle_automated_pathfinding(frame_count, game_map : Map, car : Car):
 
 def run_simulation(layout_type):
     """Run the simulation with the speified layout type"""
+    global arduino_comm_thread, receiver_thread
+
     game_map = Map(layout_type=layout_type)
     car = Car(50,50)
 
@@ -219,6 +231,29 @@ def run_simulation(layout_type):
     pygame.display.set_caption(caption)
     clock = pygame.time.Clock()
 
+    # Setup up connections
+    if HEADLESS_MODE:
+        # keep on trying until it connects
+        while not connect_tcp():
+            pass
+        receiver_thread = threading.Thread(target=tcp_receiver_thread, daemon=True)
+        if ENABLE_ARDUINO:
+            # keep on trying until it connects
+            while not connect_arduino():
+                pass
+            arduino_comm_thread = threading.Thread(target=arduino_thread, daemon=True)
+        else:
+            print("[Arduino] Communication disabled - running simulation only")
+        print("[DEBUG] Starting headless simulation...")
+        print("[DEBUG] Waiting for TCP coordinate before starting pathfinding...")
+    elif AUTOPATH_FOLLOW:
+        print("[DEBUG] Will automatically set start position and begin pathfinding...")
+
+    if HEADLESS_MODE: # Start the chosen threads
+        receiver_thread.start()
+        if ENABLE_ARDUINO:
+            arduino_comm_thread.start()
+    
     run(clock, car, game_map, caption)
 
 def run(clock, car, game_map, caption):
@@ -226,24 +261,6 @@ def run(clock, car, game_map, caption):
 
     # Performance tracking
     frame_count = 0
-
-    # Start TCP receiver thread in headless mode
-    if HEADLESS_MODE and receiver_thread is None:
-
-        receiver_thread = threading.Thread(target=tcp_receiver_thread, daemon=True)
-        receiver_thread.start()
-        receiver_thread.join()
-        if ENABLE_ARDUINO:
-            if arduino_comm_thread is None:
-                print("should work???")
-                arduino_comm_thread = threading.Thread(target=arduino_thread, daemon=True)
-                arduino_comm_thread.start()
-        else:
-            print("[Arduino] Communication disabled - running simulation only")
-        print("[DEBUG] Starting headless simulation...")
-        print("[DEBUG] Waiting for TCP coordinate before starting pathfinding...")
-    elif AUTOPATH_FOLLOW:
-        print("[DEBUG] Will automatically set start position and begin pathfinding...")
 
     # For coordinate update timing
     coordinate_processed = False
