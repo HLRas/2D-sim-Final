@@ -36,6 +36,7 @@ start_time_follow = 0
 
 # Set to true each time a new coord is sent
 restarted = True
+gotFirstCoord = False
 
 # Set to true if vehicle should stop
 stop = False
@@ -129,7 +130,7 @@ def connect_tcp():
         return False
 
 def tcp_receiver_thread():
-    global received_coords, request_pos
+    global received_coords, request_pos, gotFirstCoord
     while True:
         if request_pos: # If a new coordinate has been requested
             try:
@@ -142,6 +143,7 @@ def tcp_receiver_thread():
                         with coord_lock:
                             received_coords = (x_, y_, or_)
                         print(f"[Jetson] Received coordinate: {x_}, {y_}, Orientation: {or_}")
+                        gotFirstCoord = True # if the first coordinate had been found
                         request_pos = False # drop flag for requesting position
                     except Exception as e:
                         print(f"[Jetson] Error parsing message: {msg} ({e})")
@@ -271,8 +273,11 @@ def run_simulation(layout_type):
         receiver_thread.start()
         if ENABLE_ARDUINO:
             arduino_comm_thread.start()
-    
-    run(clock, car, game_map, caption)
+
+    if HEADLESS_MODE and gotFirstCoord:  # only start if the first coordinate has been found in headless mode
+        run(clock, car, game_map, caption)
+    elif not HEADLESS_MODE: # Start instantly if not in headless mode
+        run(clock, car, game_map, caption)
 
 def run(clock, car, game_map, caption):
     global received_coords, last_coord_time, receiver_thread, arduino_comm_thread, stop
