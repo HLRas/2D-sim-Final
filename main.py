@@ -138,6 +138,7 @@ def tcp_receiver_thread():
         if time.time() - last_coord_time > refreshDelay:
             request_pos = True
             received_coords = None
+            print("[Jetson] Restarting sim...")
 
         if request_pos: # If a new coordinate has been requested
             try:

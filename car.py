@@ -107,7 +107,7 @@ class Car:
         """Get the position of the car"""
         return (self.x, self.y)
 
-    def apply_friction(self, dt):
+    def apply_friction(self, dt): # unused!!!
         """Apply static and rolling friction to the wheels"""
         
         # Apply friction to left wheel
@@ -116,7 +116,7 @@ class Car:
         # Apply friction to right wheel
         self.wheel_R_speed = self._apply_wheel_friction(self.wheel_R_speed, self.prev_wheel_R, dt)
 
-    def _apply_wheel_friction(self, wheel_speed, wheel_prevSpeed, dt):
+    def _apply_wheel_friction(self, wheel_speed, wheel_prevSpeed, dt): # unused!!!
         if (abs(wheel_speed) == abs(wheel_prevSpeed)) and (abs(wheel_speed) > 1e-3):
             speed = wheel_speed - self.rolling_friction*dt
             if math.copysign(1, speed) == math.copysign(1, wheel_speed):
