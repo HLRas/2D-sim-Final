@@ -285,6 +285,8 @@ def run_simulation(layout_type):
         if ENABLE_ARDUINO:
             arduino_comm_thread.start()
 
+    while not gotFirstCoord: print("[DEBUG] Still waiting for first coord") # wait for the first coord
+
     if HEADLESS_MODE and gotFirstCoord:  # only start if the first coordinate has been found in headless mode
         run(clock, car, game_map, caption)
     elif not HEADLESS_MODE: # Start instantly if not in headless mode
