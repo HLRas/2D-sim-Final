@@ -59,7 +59,7 @@ def arduino_thread():
     lastSentLeft = 0
     sendRight = True
     lastSentRight = 0
-    changeThres = 0.003 # By how much should a speed change for a new one to be sent
+    changeThres = 0.001 # By how much should a speed change for a new one to be sent
     while True:
         if restarted:
             restarted = False
