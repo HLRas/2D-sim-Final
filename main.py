@@ -55,7 +55,9 @@ def connect_arduino():
 def arduino_thread():
     """Thread to handle Arduino communication"""
     global wheel_speed_queue, restarted
-
+    sendLeft = True, lastSentLeft = 0
+    sendRight = True, lastSentRight = 0
+    changeThres = 0.03 # By how much should a speed change for a new one to be sent
     while True:
         if restarted:
             restarted = False
@@ -79,19 +81,31 @@ def arduino_thread():
                     time.sleep(0.001)
                     if not stop:
                         left, right, timestamp = find_closest(wheel_speed_queue, dt)
+
+                        # Check if reached threshold
+                        if abs(lastSentLeft-left) > changeThres:
+                            sendLeft = True
+                        else: sendLeft = False
+                        if abs(lastSentRight-right) > changeThres: 
+                            sendLeft = True
+                        else: sendRight = False
+
                     else:
                         left, right = (0.0, 0.0)
                     
-                    # Always remove data from queue (either send or discard)
-                    with arduino_lock:
-                        #if left:
-                        try:
-                            msg = f"{left:.3f},{right:.3f}\n"
-                            arduino_serial.write(msg.encode('utf-8'))
-                            arduino_serial.flush()
-                            print(f"[Python] Sent: {msg} of relative time {timestamp} to Arduino")
-                        except Exception as e:
-                            print(f"[Python] Write error: {e}")
+                    # Only send if speed changed by enough, otherwise keep speed
+                    if sendLeft or sendRight:
+                        with arduino_lock:
+                            try:
+                                msg = f"{left:.3f},{right:.3f}\n"
+                                arduino_serial.write(msg.encode('utf-8'))
+                                arduino_serial.flush()
+                                print(f"[Python] Sent: {msg} of relative time {timestamp} to Arduino")
+                                lastSentLeft, lastSentRight = left, right
+                            except Exception as e:
+                                print(f"[Python] Write error: {e}")
+                    else:
+                        print(f"[Python] Not sending ({left},{right})")
 
                 time.sleep(0.01)
                 
