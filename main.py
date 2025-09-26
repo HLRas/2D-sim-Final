@@ -133,7 +133,7 @@ def connect_tcp():
 
 def tcp_receiver_thread():
     global received_coords, request_pos, gotFirstCoord
-    last_coord_time = int('inf')
+    last_coord_time = float('inf')
     while True:
         if time.time() - last_coord_time > refreshDelay:
             request_pos = True
