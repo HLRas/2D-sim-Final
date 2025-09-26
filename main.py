@@ -89,7 +89,7 @@ def arduino_thread():
                             sendLeft = True
                         else: sendLeft = False
                         if abs(lastSentRight-right) > changeThres: 
-                            sendLeft = True
+                            sendRight = True
                         else: sendRight = False
 
                     else:
@@ -431,7 +431,7 @@ def run(clock, car, game_map, caption):
             pygame.display.flip()               
 
 def find_closest(data, timestamp, index=2):
-    """Finds the closest data value to the specified timestamp"""
+    """Finds the closest data values to the specified timestamp"""
     timestamps = [tp[index] for tp in data]
     return data[bisect.bisect_left(timestamps, timestamp)]
 
