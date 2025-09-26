@@ -55,8 +55,10 @@ def connect_arduino():
 def arduino_thread():
     """Thread to handle Arduino communication"""
     global wheel_speed_queue, restarted
-    sendLeft = True, lastSentLeft = 0
-    sendRight = True, lastSentRight = 0
+    sendLeft = True
+    lastSentLeft = 0
+    sendRight = True
+    lastSentRight = 0
     changeThres = 0.03 # By how much should a speed change for a new one to be sent
     while True:
         if restarted:
