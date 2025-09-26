@@ -24,6 +24,8 @@ last_coord_time = 0
 coord_lock = threading.Lock()
 receiver_thread = None
 request_pos = True
+refreshDelay = 1 # get new coord every second..?
+rerunSim = False
 
 # --- Arduino Serial Communication for wheel speeds ---
 arduino_serial = None
@@ -131,7 +133,12 @@ def connect_tcp():
 
 def tcp_receiver_thread():
     global received_coords, request_pos, gotFirstCoord
+    last_coord_time = int('inf')
     while True:
+        if time.time() - last_coord_time > refreshDelay:
+            request_pos = True
+            received_coords = None
+
         if request_pos: # If a new coordinate has been requested
             try:
                 msg = jetbot_tcp.recv(21) # Receive exactly one message limited to 21 characters
@@ -143,8 +150,11 @@ def tcp_receiver_thread():
                         with coord_lock:
                             received_coords = (x_, y_, or_)
                         print(f"[Jetson] Received coordinate: {x_}, {y_}, Orientation: {or_}")
-                        gotFirstCoord = True # if the first coordinate had been found
+                        if not gotFirstCoord:
+                            gotFirstCoord = True # if the first coordinate had been found
                         request_pos = False # drop flag for requesting position
+                        rerunSim = True
+                        last_coord_time = time.time()
                     except Exception as e:
                         print(f"[Jetson] Error parsing message: {msg} ({e})")
                 else:
@@ -291,7 +301,8 @@ def run(clock, car, game_map, caption):
     while True:
         dt = clock.tick(FPS) / 1000.0 # Delta time in seconds
         frame_count += 1
-
+        if rerunSim: # If a new coordinate is received, rerun the sim
+            run(clock, car, game_map, caption)
         # Immediately get the wheel speeds and queue them
         speeds = car.get_speeds()
         queue_wheel_speeds(speeds[0], speeds[1], time.time()-start_time_follow)
