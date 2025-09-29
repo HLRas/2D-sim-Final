@@ -239,7 +239,7 @@ def handle_automated_pathfinding(frame_count, game_map : Map, car : Car):
                     path_found = game_map.pathfinder.pathfind(game_map.cubes, game_map.start, game_map.end, game_map.mark_dirty)
 
                     if path_found:
-                        start_time_follow = time.time()
+                        #start_time_follow = time.time()
                         if PATHFOLLOW_METHOD == 0: # Cross track
                             car.cross_start_following(game_map.pathfinder.get_smooth_points())
                             print(f"[DEBUG] {frame_count}: Auto-started cross-track pathfinding to parking space")
@@ -253,7 +253,7 @@ def handle_automated_pathfinding(frame_count, game_map : Map, car : Car):
 
 def run_simulation(layout_type):
     """Run the simulation with the speified layout type"""
-    global arduino_comm_thread, receiver_thread
+    global arduino_comm_thread, receiver_thread, start_time_follow
 
     game_map = Map(layout_type=layout_type)
     car = Car(50,50)
@@ -288,6 +288,8 @@ def run_simulation(layout_type):
             arduino_comm_thread.start()
 
         while not gotFirstCoord: print("[DEBUG] Still waiting for first coord") # wait for the first coord
+
+    start_time_follow = time.time()
 
     if HEADLESS_MODE and gotFirstCoord:  # only start if the first coordinate has been found in headless mode
         run(clock, car, game_map, caption)
