@@ -392,7 +392,6 @@ class Car:
         closest_index = 0
 
         # Start searching from current index to avoid going backwards
-        """WHY MINUS 2???---------------------------------------------------------"""
         start_index = max(0, self.cross_index -2)
 
         for i in range(start_index, len(self.cross_path_points)):
@@ -428,8 +427,8 @@ class Car:
 
     def _cross_calc_error(self, closest_point):
         """Calculate the cross-track error (perpendicular distance from path)"""
-        if not closest_point or self.cross_index >= len(self.cross_path_points)-1:
-            print(f"[Cross] Error could not be calculated, closest point: {closest_point}, {self.cross_path_points}")
+        if not closest_point or self.cross_index > len(self.cross_path_points)-1:
+            print(f"[Cross] Error could not be calculated, closest point: {self.cross_index}, {len(self.cross_path_points)}")
             return 0
         
         # Get the path segment
