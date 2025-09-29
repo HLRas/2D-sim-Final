@@ -429,7 +429,7 @@ class Car:
     def _cross_calc_error(self, closest_point):
         """Calculate the cross-track error (perpendicular distance from path)"""
         if not closest_point or self.cross_index >= len(self.cross_path_points)-1:
-            print("[Cross] Error could not be calculated")
+            print(f"[Cross] Error could not be calculated, closest point: {closest_point}")
             return 0
         
         # Get the path segment
