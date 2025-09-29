@@ -24,7 +24,7 @@ last_coord_time = 0
 coord_lock = threading.Lock()
 receiver_thread = None
 request_pos = True
-refreshDelay = 1 # get new coord every second..?
+refreshDelay = 10000 # get new coord every second..?
 rerunSim = False
 
 # --- Arduino Serial Communication for wheel speeds ---
@@ -64,6 +64,11 @@ def arduino_thread():
     lastSentRight = 0
     changeThres = 0.001 # By how much should a speed change for a new one to be sent
     while True:
+        if restarted:
+            restarted = False
+            wheel_speed_queue.clear()
+            # remember to add new time for closed loop
+
         if start_time_follow != 0:
             try:
                 if arduino_serial:
@@ -127,14 +132,13 @@ def connect_tcp():
         return False
 
 def tcp_receiver_thread():
-    global received_coords, request_pos, gotFirstCoord, restarted
-    
+    global received_coords, request_pos, gotFirstCoord
+    last_coord_time = float('inf')
     while True:
-        if time.time() - start_time_follow > refreshDelay:
+        if time.time() - last_coord_time > refreshDelay:
             request_pos = True
             received_coords = None
             print("[Jetson] Restarting sim...")
-            restarted = True
 
         if request_pos: # If a new coordinate has been requested
             try:
@@ -150,8 +154,8 @@ def tcp_receiver_thread():
                         if not gotFirstCoord:
                             gotFirstCoord = True # if the first coordinate had been found
                         request_pos = False # drop flag for requesting position
-                        
-                        
+                        rerunSim = True
+                        last_coord_time = time.time()
                     except Exception as e:
                         print(f"[Jetson] Error parsing message: {msg} ({e})")
                 else:
@@ -304,10 +308,7 @@ def run(clock, car, game_map, caption):
     while True:
         dt = clock.tick(FPS) / 1000.0 # Delta time in seconds
         frame_count += 1
-        if restarted: # If a new coordinate is received, rerun the sim
-            restarted = False
-            wheel_speed_queue.clear()
-            start_time_follow = time.time()
+        if rerunSim: # If a new coordinate is received, rerun the sim
             run(clock, car, game_map, caption)
         # Immediately get the wheel speeds and queue them
         speeds = car.get_speeds()
