@@ -228,7 +228,7 @@ def handle_automated_pathfinding(frame_count, game_map : Map, car : Car):
                 print(f"[DEBUG] Frame {frame_count}: Auto-set start position at ({car.get_pos()})")
         
         elif frame_count == 550: # Start pathfinding after start is set
-            start_time_follow = time.time()
+            #start_time_follow = time.time()
             if game_map.start:
                 nearest_space = game_map._find_nearest_parking_space(car)
                 if nearest_space and nearest_space.target_cube:
@@ -238,6 +238,7 @@ def handle_automated_pathfinding(frame_count, game_map : Map, car : Car):
                     path_found = game_map.pathfinder.pathfind(game_map.cubes, game_map.start, game_map.end, game_map.mark_dirty)
 
                     if path_found:
+                        start_time_follow = time.time()
                         if PATHFOLLOW_METHOD == 0: # Cross track
                             car.cross_start_following(game_map.pathfinder.get_smooth_points())
                             print(f"[DEBUG] {frame_count}: Auto-started cross-track pathfinding to parking space")
