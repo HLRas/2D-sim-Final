@@ -202,7 +202,7 @@ def headless_handling(headless):
 
 def queue_wheel_speeds(left_speed, right_speed, time_since_pathfollow):
     """Queue wheel speeds for sending to Arduino"""
-    print(f"[Debug] Attemping to add {left_speed}, {right_speed} at {time_since_pathfollow}")
+    #print(f"[Debug] Attemping to add {left_speed}, {right_speed} at {time_since_pathfollow}")
     if start_time_follow != 0:
         wheel_speed_queue.append((left_speed, right_speed, time_since_pathfollow))
 
