@@ -96,6 +96,8 @@ def arduino_thread():
                         else: sendRight = False
 
                     else:
+                        sendLeft = True
+                        sendRight = True
                         left, right = (0.0, 0.0)
                     
                     # Only send if speed changed by enough, otherwise keep speed
