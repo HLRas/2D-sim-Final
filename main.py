@@ -304,9 +304,24 @@ def run(clock, car, game_map, caption):
 
     # For coordinate update timing
     coordinate_processed = False
-    
+
+    now = time.time()
+    prev = 0
+
     while True:
-        dt = clock.tick(FPS) / 1000.0 # Delta time in seconds
+        now = time.time()
+
+        if HEADLESS_MODE:
+            dt = 1/FPS
+            pygame.event.pump()
+        else:
+            dt = clock.tick(FPS) / 1000.0 # Delta time in seconds
+
+        if HEADLESS_MODE and now - prev < dt:
+            continue
+        else:
+            prev = now
+
         frame_count += 1
         if rerunSim: # If a new coordinate is received, rerun the sim
             run(clock, car, game_map, caption)
