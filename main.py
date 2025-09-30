@@ -256,7 +256,7 @@ def run_simulation(layout_type):
     global arduino_comm_thread, receiver_thread, start_time_follow
 
     game_map = Map(layout_type=layout_type)
-    car = Car(50,50)
+    car = Car(78,303)
 
     #Set up display
     layout_names = ["Default Layout", "Empty Layout", "Minimal Layout"]
@@ -289,7 +289,7 @@ def run_simulation(layout_type):
 
         while not gotFirstCoord: print("[DEBUG] Still waiting for first coord") # wait for the first coord
 
-    start_time_follow = time.time()
+    #start_time_follow = time.time()
 
     if HEADLESS_MODE and gotFirstCoord:  # only start if the first coordinate has been found in headless mode
         run(clock, car, game_map, caption)
@@ -297,7 +297,7 @@ def run_simulation(layout_type):
         run(clock, car, game_map, caption)
 
 def run(clock, car, game_map, caption):
-    global received_coords, last_coord_time, receiver_thread, arduino_comm_thread, stop
+    global received_coords, last_coord_time, receiver_thread, arduino_comm_thread, stop, start_time_follow
 
     # Performance tracking
     frame_count = 0
@@ -311,8 +311,9 @@ def run(clock, car, game_map, caption):
         if rerunSim: # If a new coordinate is received, rerun the sim
             run(clock, car, game_map, caption)
         # Immediately get the wheel speeds and queue them
-        speeds = car.get_speeds()
-        queue_wheel_speeds(speeds[0], speeds[1], time.time()-start_time_follow)
+        if start_time_follow != 0:
+            speeds = car.get_speeds()
+            queue_wheel_speeds(speeds[0], speeds[1], time.time()-start_time_follow)
         
         # --- Check for received coordinates (headless only) ---
         if HEADLESS_MODE and not coordinate_processed:
@@ -351,6 +352,7 @@ def run(clock, car, game_map, caption):
                     game_map.pathfinder.clear_path(game_map.cubes, game_map.mark_dirty)
                     path_found = game_map.pathfinder.pathfind(game_map.cubes, game_map.start, game_map.end, game_map.mark_dirty)
                     if path_found:
+                        start_time_follow = time.time()
                         if PATHFOLLOW_METHOD == 0: # Cross Track
                             car.cross_start_following(game_map.pathfinder.get_smooth_points())
                             print(f"[Cross] Auto-started cross-track pathfinding to parking space")
