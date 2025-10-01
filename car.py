@@ -52,17 +52,20 @@ class Car:
         # Carrot path following
         self.carrot_following = False
         self.carrot_path_points = []
-        self.carrot_index = 0
-        self.carrot_base_distance = 25 # Minimum lookahead distance
-        self.carrot_arrival_threshold = 30
-        self.carrot_slowdown_coeff = 0.6 # Slowdown near destination
-        self.carrot_base_speed = 1.7 # This was 0.5
+        self.carrot_index = 0 # Closest point index to path
+        self.carrot_target_ind = 0 # Target index on path
+        self.carrot_base_distance = 10 # Minimum lookahead distance
+        self.carrot_arrival_threshold = 25 # Arrival to a point threshold
+        self.carrot_arrival_final_thres = 5 # Arrival to the final point threshold
+        self.carrot_slowdown_coeff = 0.3 # Slowdown near destination
+        self.carrot_base_speed = 200 # This was 0.5
         self.carrot_max_velo_bonus = 0.2 # Maximum velocity maintainence bonus
-        self.carrot_min_target_speed = 0.2
+        self.carrot_lookahead_speed_bonus = 2.0 # Look further depending on speed
+        self.carrot_min_target_speed = 50
         self.carrot_velo_bonus_coeff = 0.1 # Velocity maintainence coeff
-        self.carrot_max_turn_rate = 2.5 # Max turn rate in rad
-        self.carrot_command_coeff = 0.4 # Scale wheel commands by this
-        self.carrot_turn_pen_coeff = 0.05 # Turn penalty coefficient
+        self.carrot_max_turn_rate = 25 # Max turn rate in rad
+        self.carrot_command_coeff = 1 # Scale wheel commands by this
+        self.carrot_turn_pen_coeff = 10.0 # Turn penalty coefficient
 
         # Cross-track error following
         self.cross_following = False
@@ -235,7 +238,8 @@ class Car:
             return False
         
         self.carrot_path_points = path_points[:]
-        self.carrot_target_index = 0
+        self.carrot_index = 0
+        self.carrot_target_ind = 0
         self.carrot_following = True
         self.cross_following = False # Disable cross-track following
 
@@ -251,10 +255,10 @@ class Car:
 
         # Dynamic carrot distance based on current speed for smoother high-speed driving
         current_speed = self.speed
-        dynamic_carrot_distance = self.carrot_base_distance + current_speed * 10 # Further distance if quicker
+        dynamic_carrot_distance = self.carrot_base_distance + current_speed * self.carrot_lookahead_speed_bonus # Further distance if quicker
 
         # Start from current target and look ahead
-        for i in range(self.carrot_target_index, len(self.carrot_path_points)):
+        for i in range(self.carrot_index, len(self.carrot_path_points)):
             point = self.carrot_path_points[i]
             distance = math.sqrt((point[0] - car_pos[0])**2 + (point[1] - car_pos[1])**2)
 
@@ -272,8 +276,23 @@ class Car:
             return
         
         car_pos = (self.x, self.y)
+        closest = float('inf')
+        closest_index = self.carrot_index
+
+        for i in range(self.carrot_index, len(self.carrot_path_points)):
+            path_point = self.carrot_path_points[i]
+            car_to_path_dist = math.sqrt((path_point[0] - car_pos[0])**2 + (path_point[1] - car_pos[1])**2)
+            if car_to_path_dist < closest:
+                closest = car_to_path_dist
+                closest_index = i
+
+        pygame.draw.circle(pygame.display.get_surface(), PURPLE, self.carrot_path_points[closest_index],5)
+        pygame.display.flip()
+
+        self.carrot_index = closest_index
 
         # Check if we have reached the current target
+        '''
         if self.carrot_index < len(self.carrot_path_points):
             target = self.carrot_path_points[self.carrot_index]
             distance = math.sqrt((target[0] - car_pos[0])**2 + (target[1] - car_pos[1])**2)
@@ -289,7 +308,8 @@ class Car:
                     print("[Carrot] Reached destination! Path following complete")
                     self.stop_path_following()
                     return
-                
+        '''
+
     def _carrot_calc_steering_command(self, target_point):
         """Calculate wheel commands to steer towards target point"""
         if not target_point:
@@ -310,17 +330,16 @@ class Car:
         # Normalise angle to -pi to pi
         while angle_diff > math.pi:
             angle_diff -= 2*math.pi
-        while angle_diff < math.pi:
+        while angle_diff < -math.pi:
             angle_diff += 2*math.pi
 
         # Calculate distance to target for speed control
-        distance = math.sqrt(dx**2 + dy**2)# might not work, change to sqrt
+        distance = math.sqrt(dx**2 + dy**2)
 
         # PID-like control for steering
         max_turn_rate = self.carrot_max_turn_rate
 
-        """----------------WHERE DOES THIS 1.5 COME FROM?? ---------------------------------------"""
-        turn_command = max(-max_turn_rate, min(max_turn_rate, angle_diff)) 
+        turn_command = max(-max_turn_rate, min(max_turn_rate, angle_diff*100)) 
 
         # Reduce turn penalty to maintain speed through curves
         turn_penalty = abs(turn_command) * self.carrot_turn_pen_coeff
@@ -357,6 +376,10 @@ class Car:
         if carrot_point:
             # Calculate sterring commands
             left_cmd, right_cmd = self._carrot_calc_steering_command(carrot_point)
+
+            # Draw lookahead point
+            pygame.draw.circle(pygame.display.get_surface(), RED, carrot_point,5)
+            pygame.display.flip()
 
             # Apply commands
             self._apply_wheel_commands(left_cmd, right_cmd, dt)
