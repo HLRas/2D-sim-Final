@@ -54,17 +54,28 @@ def save_positions_to_csv():
         print("[CSV] No positions recorded")
         return
     
-    timestamp = time.strftime("%Y%m%d_%H%M%S")
-    filename = f"car_positions_{timestamp}.csv"
+    # Create output directory if it doesn't exist
+    output_dir = "output"
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    
+    # Find the next available output number
+    x = 1
+    while os.path.exists(os.path.join(output_dir, f"output{x}.csv")):
+        x += 1
+    
+    filename = os.path.join(output_dir, f"output{x}.csv")
     
     try:
         with open(filename, 'w', newline='') as csvfile:
             writer = csv.writer(csvfile)
             # Write header
             writer.writerow(['x', 'y', 'orientation'])
-            # Write data
+            # Write data (convert orientation from radians to degrees)
             for position in car_positions:
-                writer.writerow(position)
+                x_pos, y_pos, orientation_rad = position
+                orientation_deg = math.degrees(orientation_rad)
+                writer.writerow([x_pos, y_pos, orientation_deg])
         
         print(f"[CSV] Saved {len(car_positions)} positions to {filename}")
     except Exception as e:
