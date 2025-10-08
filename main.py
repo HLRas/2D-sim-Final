@@ -6,6 +6,7 @@ import socket
 import threading
 import time
 import serial
+import csv
 from car import Car
 from map_generation import Map
 from config import *
@@ -42,6 +43,32 @@ gotFirstCoord = False
 
 # Set to true if vehicle should stop
 stop = False
+
+# --- Position tracking for CSV output ---
+car_positions = []  # Array to store positions during path following
+path_following_started = False
+
+def save_positions_to_csv():
+    """Save car positions to CSV file"""
+    if not car_positions:
+        print("[CSV] No positions recorded")
+        return
+    
+    timestamp = time.strftime("%Y%m%d_%H%M%S")
+    filename = f"car_positions_{timestamp}.csv"
+    
+    try:
+        with open(filename, 'w', newline='') as csvfile:
+            writer = csv.writer(csvfile)
+            # Write header
+            writer.writerow(['x', 'y', 'orientation'])
+            # Write data
+            for position in car_positions:
+                writer.writerow(position)
+        
+        print(f"[CSV] Saved {len(car_positions)} positions to {filename}")
+    except Exception as e:
+        print(f"[CSV] Error saving positions: {e}")
 
 def connect_arduino():
     """Connect arduino to jetbot via serial"""
@@ -370,12 +397,15 @@ def run(clock, car, game_map, caption):
                     path_found = game_map.pathfinder.pathfind(game_map.cubes, game_map.start, game_map.end, game_map.mark_dirty)
                     if path_found:
                         start_time_follow = time.time()
+                        path_following_started = True  # Start position tracking
+                        car_positions.clear()  # Clear any previous positions
                         if PATHFOLLOW_METHOD == 0: # Cross Track
                             car.cross_start_following(game_map.pathfinder.get_smooth_points())
                             print(f"[Cross] Auto-started cross-track pathfinding to parking space")
                         else: # Default to carrot
                             car.carrot_start_following(game_map.pathfinder.get_smooth_points())
                             print(f"[Carrot] Auto started carrot pathfinding to parking space")
+                        print(f"[CSV] Started position tracking")
                     else:
                         print("[DEBUG] Pathfinding failed!")
                 else:
@@ -435,6 +465,18 @@ def run(clock, car, game_map, caption):
         # Update car physics
         car.find_next_pos(dt)
         
+        # Record position during path following (headless mode only)
+        if HEADLESS_MODE and path_following_started and (car.carrot_following or car.cross_following):
+            car_positions.append([car.x, car.y, car.angle])
+            if len(car_positions) % 60 == 0:  # Debug every 60 frames
+                print(f"[CSV] Recorded {len(car_positions)} positions")
+        
+        # Check if path following just stopped and save positions
+        elif HEADLESS_MODE and path_following_started and not (car.carrot_following or car.cross_following):
+            print("[CSV] Path following stopped, saving positions...")
+            save_positions_to_csv()
+            path_following_started = False  # Reset flag
+        
         # Check parking status
         for space in game_map.parking_spaces:
             if space.is_car_in_space(car):
@@ -449,6 +491,11 @@ def run(clock, car, game_map, caption):
 
                     print("[DEBUG] Simulation completed successfully!")
                     print(wheel_speed_queue)
+                    
+                    # Save position data to CSV
+                    if HEADLESS_MODE and car_positions:
+                        save_positions_to_csv()
+                    
                     pygame.quit()
                     return
             else:
