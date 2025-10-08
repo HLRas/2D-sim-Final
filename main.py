@@ -347,7 +347,7 @@ def run(clock, car, game_map, caption):
 
     now = time.time()
     prev = 0
-
+    path_following_started = False
     while True:
         now = time.time()
 
