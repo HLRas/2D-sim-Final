@@ -340,7 +340,7 @@ def run_simulation(layout_type):
         run(clock, car, game_map, caption)
 
 def run(clock, car, game_map, caption):
-    global received_coords, last_coord_time, receiver_thread, arduino_comm_thread, stop, start_time_follow, closedLoop, closedLoop_prev
+    global received_coords, last_coord_time, receiver_thread, arduino_comm_thread, stop, start_time_follow, closedLoop, closedLoop_prev, request_pos
 
     # Performance tracking
     frame_count = 0
