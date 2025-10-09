@@ -56,7 +56,7 @@ class Car:
         self.carrot_target_ind = 0 # Target index on path
         self.carrot_base_distance = 100 # Minimum lookahead distance ##changed from 10
         self.carrot_arrival_threshold = 25 # Arrival to a point threshold
-        self.carrot_arrival_final_thres = 5 # Arrival to the final point threshold
+        self.carrot_arrival_final_thres = 30 # Arrival to the final point threshold
         self.carrot_slowdown_coeff = 0.3 # Slowdown near destination
         self.carrot_base_speed = 200
         self.carrot_max_velo_bonus = 0.2 # Maximum velocity maintainence bonus
