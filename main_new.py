@@ -438,7 +438,7 @@ def run(clock, car, game_map, caption):
                             print(f"[CSV] Started position tracking")
                             
                             # Enable closed loop position updates
-                            global closedLoop, closedLoop_prev
+                            global closedLoop
                             closedLoop = True
                             closedLoop_prev = time.time()
                             print(f"[Closed Loop] Enabled with {closedLoop_delay}s interval")
