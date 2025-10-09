@@ -19,7 +19,7 @@ CUBE_SIZE = 25
 FPS = 120
 
 # Car physics
-CAR_ACCELERATION = 10.0 #pixels/s^2 (=0.4m/s^2)
+CAR_ACCELERATION = 10000.0 #pixels/s^2 (=0.4m/s^2)
 CAR_FRICTION = 0.0  # Base friction value
 STATIC_FRICTION_RATIO = 0.8  # Fraction of CAR_FRICTION used for static friction
 ROLLING_FRICTION_RATIO = 0.2  # Fraction of CAR_FRICTION used for rolling friction
