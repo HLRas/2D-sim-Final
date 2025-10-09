@@ -28,6 +28,7 @@ request_pos = True
 refreshDelay = 10000 # get new coord every second..?
 rerunSim = False
 closedLoop = False
+closedLoop_delay = 1
 
 # --- Arduino Serial Communication for wheel speeds ---
 arduino_serial = None
@@ -349,6 +350,8 @@ def run(clock, car, game_map, caption):
 
     now = time.time()
     prev = 0
+    closedLoop_now = time.time()
+    closedLoop_prev = 0
     path_following_started = False
     while True:
         now = time.time()
@@ -364,6 +367,12 @@ def run(clock, car, game_map, caption):
         else:
             prev = now
 
+        #Closed loop handling
+        closedLoop_now = time.time()
+        if HEADLESS_MODE and closedLoop and not request_pos and closedLoop_now - closedLoop_prev < closedLoop_delay:
+            request_pos = True
+            closedLoop_prev = closedLoop_now
+        # ---
         frame_count += 1
         '''
         if rerunSim: # If a new coordinate is received, rerun the sim
