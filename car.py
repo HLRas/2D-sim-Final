@@ -317,8 +317,7 @@ class Car:
         if not target_point:
             print("[Carrot] No target point, sending (0, 0) speeds")
             return 0, 0
-        print(self.carrot_slowed)
-        print(self.carrot_base_speed)
+        
         # Calculate angle to target
         dx = target_point[0] - self.x
         dy = target_point[1] - self.y
@@ -386,7 +385,6 @@ class Car:
 
             # Slow down if close to finish
             if not self.carrot_slowed:
-                
                 dest = self.carrot_path_points[-1]
                 dist = math.sqrt((self.x - dest[0])**2 + (self.y - dest[1])**2)
                 if dist < self.carrot_slowdown_thres:
