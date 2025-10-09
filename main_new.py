@@ -340,7 +340,7 @@ def run_simulation(layout_type):
         run(clock, car, game_map, caption)
 
 def run(clock, car, game_map, caption):
-    global received_coords, last_coord_time, receiver_thread, arduino_comm_thread, stop, start_time_follow
+    global received_coords, last_coord_time, receiver_thread, arduino_comm_thread, stop, start_time_follow, closedLoop, closedLoop_prev
 
     # Performance tracking
     frame_count = 0
@@ -438,7 +438,6 @@ def run(clock, car, game_map, caption):
                             print(f"[CSV] Started position tracking")
                             
                             # Enable closed loop position updates
-                            global closedLoop
                             closedLoop = True
                             closedLoop_prev = time.time()
                             print(f"[Closed Loop] Enabled with {closedLoop_delay}s interval")
