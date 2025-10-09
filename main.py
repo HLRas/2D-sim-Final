@@ -27,6 +27,7 @@ receiver_thread = None
 request_pos = True
 refreshDelay = 10000 # get new coord every second..?
 rerunSim = False
+closedLoop = False
 
 # --- Arduino Serial Communication for wheel speeds ---
 arduino_serial = None
@@ -173,12 +174,13 @@ def connect_tcp():
 
 def tcp_receiver_thread():
     global received_coords, request_pos, gotFirstCoord
-    last_coord_time = float('inf')
+    #last_coord_time = float('inf')
     while True:
-        if time.time() - last_coord_time > refreshDelay:
+        '''if time.time() - last_coord_time > refreshDelay:
             request_pos = True
             received_coords = None
             print("[Jetson] Restarting sim...")
+        '''
 
         if request_pos: # If a new coordinate has been requested
             try:
@@ -194,8 +196,8 @@ def tcp_receiver_thread():
                         if not gotFirstCoord:
                             gotFirstCoord = True # if the first coordinate had been found
                         request_pos = False # drop flag for requesting position
-                        rerunSim = True
-                        last_coord_time = time.time()
+                        #rerunSim = True
+                        #last_coord_time = time.time()
                     except Exception as e:
                         print(f"[Jetson] Error parsing message: {msg} ({e})")
                 else:
@@ -363,8 +365,10 @@ def run(clock, car, game_map, caption):
             prev = now
 
         frame_count += 1
+        '''
         if rerunSim: # If a new coordinate is received, rerun the sim
             run(clock, car, game_map, caption)
+        '''
         # Immediately get the wheel speeds and queue them
         if start_time_follow != 0:
             speeds = car.get_speeds()
