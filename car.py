@@ -597,21 +597,24 @@ class Car:
         speed_change_rate = self.wheel_acceleration * dt
 
         # Left wheel
+        self.wheel_L_speed = left_target
+        self.wheel_R_speed = right_target
+        '''
         if abs(left_target - self.wheel_L_speed) <= speed_change_rate:
             self.wheel_L_speed = left_target
         elif left_target > self.wheel_L_speed:
             self.wheel_L_speed += speed_change_rate
         else:
             self.wheel_L_speed -= speed_change_rate
-
+        '''
         # Right wheel
-        if abs(right_target - self.wheel_R_speed) <= speed_change_rate:
+        '''if abs(right_target - self.wheel_R_speed) <= speed_change_rate:
             self.wheel_R_speed = right_target
         elif right_target > self.wheel_R_speed:
             self.wheel_R_speed += speed_change_rate
         else:
             self.wheel_R_speed -= speed_change_rate
-
+        '''
     def update_path_following(self, dt):
         if self.carrot_following:
             self._carrot_update_following(dt)
