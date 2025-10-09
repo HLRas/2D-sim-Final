@@ -372,6 +372,15 @@ class Car:
             print("[Carrot] Finsished following")
             return
 
+        # Check if we've reached the final destination
+        final_point = self.carrot_path_points[-1]
+        distance_to_final = math.sqrt((self.x - final_point[0])**2 + (self.y - final_point[1])**2)
+        
+        if distance_to_final < self.carrot_arrival_final_thres:
+            print("[Carrot] Reached destination! Path following complete")
+            self.stop_path_following()
+            return
+
         # Find carrot point
         carrot_point = self._carrot_find_point()
 
