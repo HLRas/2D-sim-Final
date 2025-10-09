@@ -317,7 +317,8 @@ class Car:
         if not target_point:
             print("[Carrot] No target point, sending (0, 0) speeds")
             return 0, 0
-        
+        print(self.carrot_slowed)
+        print(self.carrot_base_speed)
         # Calculate angle to target
         dx = target_point[0] - self.x
         dy = target_point[1] - self.y
