@@ -386,11 +386,12 @@ class Car:
 
             # Slow down if close to finish
             if not self.carrot_slowed:
-                self.carrot_slowed = True
+                
                 dest = self.carrot_path_points[-1]
                 dist = math.sqrt((self.x - dest[0])**2 + (self.y - dest[1])**2)
                 if dist < self.carrot_slowdown_thres:
-                    self.carrot_base_speed = self.carrot_base_speed / 2.0
+                    self.carrot_base_speed /= 2.0
+                    self.carrot_slowed = True
 
             # Apply commands
             self._apply_wheel_commands(left_cmd, right_cmd, dt)
