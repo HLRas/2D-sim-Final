@@ -61,7 +61,7 @@ class Car:
         self.carrot_base_speed = 200
         self.carrot_max_velo_bonus = 0.2 # Maximum velocity maintainence bonus
         self.carrot_lookahead_speed_bonus = 2.0 # Look further depending on speed
-        self.carrot_min_target_speed = 150 # This was 50
+        self.carrot_min_target_speed = 100 # This was 50
         self.carrot_velo_bonus_coeff = 0.1 # Velocity maintainence coeff
         self.carrot_max_turn_rate = 25 # Max turn rate in rad
         self.carrot_command_coeff = 1 # Scale wheel commands by this
