@@ -369,10 +369,9 @@ def run(clock, car, game_map, caption):
 
         #Closed loop handling
         closedLoop_now = time.time()
-        if HEADLESS_MODE and closedLoop and not request_pos and (closedLoop_now - closedLoop_prev) >= closedLoop_delay:
+        if HEADLESS_MODE and closedLoop and not request_pos and closedLoop_now - closedLoop_prev < closedLoop_delay:
             request_pos = True
             closedLoop_prev = closedLoop_now
-            print(f"[Closed Loop] Requesting position update after {closedLoop_delay}s")
             
         # ---
         frame_count += 1
@@ -386,70 +385,58 @@ def run(clock, car, game_map, caption):
             queue_wheel_speeds(speeds[0], speeds[1], time.time()-start_time_follow)
         
         # --- Check for received coordinates (headless only) ---
-        if HEADLESS_MODE and received_coords is not None:
+        if HEADLESS_MODE and not coordinate_processed:
             with coord_lock:
                 coords = received_coords
-                received_coords = None  # Clear the coordinate so we don't process it again
-            
             if coords:
                 x, y, orien = coords
                 print(f"[Jetson] Setting car position to ({x:.1f}, {y:.1f}) with orientation {math.degrees(orien)}° at frame {frame_count}")
                 car.set_position((x,y))
                 car.set_orientation(orien)
 
-                # Only do pathfinding on the first coordinate
-                if not coordinate_processed:
-                    coordinate_processed = True
-                    
-                    # Execute pathfinding once after receiving first coordinate
-                    # Set start position
-                    car_center = car.get_rect().center
-                    print(f"[DEBUG] Car center after position update: {car_center}")
-                    cube = game_map.get_cube(car_center)
-                    if cube:
-                        if game_map.start:
-                            game_map.start.make_clear()
-                            game_map.mark_dirty(game_map.start)
-                        cube.make_start()
-                        game_map.start = cube
-                        game_map.mark_dirty(cube)
-                        print(f"[Jetson] Auto-set start position at ({car.x:.1f}, {car.y:.1f})")
-                    
-                    # Find nearest parking space and pathfind
-                    print(f"[DEBUG] Finding nearest parking space from car position")
-                    nearest_space = game_map._find_nearest_parking_space(car)
-                    if nearest_space and nearest_space.target_cube:
-                        target_pos = nearest_space.get_target_position()
-                        print(f"[DEBUG] Selected parking space target position: {target_pos}")
-                        game_map.end = nearest_space.target_cube
-                        game_map._update_neighbors_if_needed()
-                        game_map.pathfinder.clear_path(game_map.cubes, game_map.mark_dirty)
-                        path_found = game_map.pathfinder.pathfind(game_map.cubes, game_map.start, game_map.end, game_map.mark_dirty)
-                        if path_found:
-                            start_time_follow = time.time()
-                            path_following_started = True  # Start position tracking
-                            car_positions.clear()  # Clear any previous positions
-                            if PATHFOLLOW_METHOD == 0: # Cross Track
-                                car.cross_start_following(game_map.pathfinder.get_smooth_points())
-                                print(f"[Cross] Auto-started cross-track pathfinding to parking space")
-                            else: # Default to carrot
-                                car.carrot_start_following(game_map.pathfinder.get_smooth_points())
-                                print(f"[Carrot] Auto started carrot pathfinding to parking space")
-                            print(f"[CSV] Started position tracking")
-                            
-                            # Enable closed loop position updates
-                            global closedLoop, closedLoop_prev
-                            closedLoop = True
-                            closedLoop_prev = time.time()
-                            print(f"[Closed Loop] Enabled with {closedLoop_delay}s interval")
-                        else:
-                            print("[DEBUG] Pathfinding failed!")
-                    else:
-                        print("[DEBUG] No available parking space found!")
-                else:
-                    # This is a closed-loop position update, don't redo pathfinding
-                    print(f"[Closed Loop] Updated car position to ({x:.1f}, {y:.1f}) with orientation {math.degrees(orien)}°")
+                coordinate_processed = True
 
+                # Execute pathfinding once after receiving coordinates
+                # Set start position
+                car_center = car.get_rect().center
+                print(f"[DEBUG] Car center after position update: {car_center}")
+                cube = game_map.get_cube(car_center)
+                if cube:
+                    if game_map.start:
+                        game_map.start.make_clear()
+                        game_map.mark_dirty(game_map.start)
+                    cube.make_start()
+                    game_map.start = cube
+                    game_map.mark_dirty(cube)
+                    print(f"[Jetson] Auto-set start position at ({car.x:.1f}, {car.y:.1f})")
+                
+                # Find nearest parking space and pathfind
+                print(f"[DEBUG] Finding nearest parking space from car position")
+                nearest_space = game_map._find_nearest_parking_space(car)
+                if nearest_space and nearest_space.target_cube:
+                    target_pos = nearest_space.get_target_position()
+                    print(f"[DEBUG] Selected parking space target position: {target_pos}")
+                    game_map.end = nearest_space.target_cube
+                    game_map._update_neighbors_if_needed()
+                    game_map.pathfinder.clear_path(game_map.cubes, game_map.mark_dirty)
+                    path_found = game_map.pathfinder.pathfind(game_map.cubes, game_map.start, game_map.end, game_map.mark_dirty)
+                    if path_found:
+                        start_time_follow = time.time()
+                        path_following_started = True  # Start position tracking
+                        car_positions.clear()  # Clear any previous positions
+                        if PATHFOLLOW_METHOD == 0: # Cross Track
+                            car.cross_start_following(game_map.pathfinder.get_smooth_points())
+                            print(f"[Cross] Auto-started cross-track pathfinding to parking space")
+                        else: # Default to carrot
+                            car.carrot_start_following(game_map.pathfinder.get_smooth_points())
+                            print(f"[Carrot] Auto started carrot pathfinding to parking space")
+                        print(f"[CSV] Started position tracking")
+                    else:
+                        print("[DEBUG] Pathfinding failed!")
+                else:
+                    print("[DEBUG] No available parking space found!")
+
+# hallo????
         # Handle automated pathfinding
         if AUTOPATH_FOLLOW and not HEADLESS_MODE:
             # Normal auto-pathfinding for GUI mode
