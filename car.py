@@ -66,7 +66,7 @@ class Car:
         self.carrot_max_turn_rate = 25 # Max turn rate in rad
         self.carrot_command_coeff = 1 # Scale wheel commands by this
         self.carrot_turn_pen_coeff = 10.0 # Turn penalty coefficient
-        self.carrot_slowdown_thres = 200 # How far away from dest should we slow down
+        self.carrot_slowdown_thres = 400 # How far away from dest should we slow down
         self.carrot_slowed = False #if in slow region
 
         # Cross-track error following
