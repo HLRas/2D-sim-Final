@@ -175,39 +175,45 @@ def connect_tcp():
 
 def tcp_receiver_thread():
     global received_coords, request_pos, gotFirstCoord
-    #last_coord_time = float('inf')
+    message_buffer = ""
+    
     while True:
-        '''if time.time() - last_coord_time > refreshDelay:
-            request_pos = True
-            received_coords = None
-            print("[Jetson] Restarting sim...")
-        '''
-
         if request_pos: # If a new coordinate has been requested
             try:
-                msg = jetbot_tcp.recv(21) # Receive exactly one message limited to 21 characters
-                if msg:
-                    try:
-                        decoded = msg.decode("utf-8").strip()
-                        parts = decoded.split(",")
-                        x_, y_, or_ = map(float, parts)
-                        with coord_lock:
-                            received_coords = (x_, y_, or_)
-                        print(f"[Jetson] Received coordinate: {x_}, {y_}, Orientation: {or_}")
-                        if not gotFirstCoord:
-                            gotFirstCoord = True # if the first coordinate had been found
-                        request_pos = False # drop flag for requesting position
-                        #rerunSim = True
-                        #last_coord_time = time.time()
-                    except Exception as e:
-                        print(f"[Jetson] Error parsing message: {msg} ({e})")
+                # Receive data in chunks and build complete messages
+                data = jetbot_tcp.recv(1024).decode("utf-8")
+                if data:
+                    message_buffer += data
+                    
+                    # Process all complete messages in buffer
+                    while '\n' in message_buffer:
+                        # Extract one complete message (up to newline)
+                        message, message_buffer = message_buffer.split('\n', 1)
+                        message = message.strip()
+                        
+                        if message:  # Process non-empty messages
+                            try:
+                                print(f"[Jetson] Raw message: '{message}'")
+                                parts = message.split(",")
+                                if len(parts) == 3:
+                                    x_, y_, or_ = map(float, parts)
+                                    with coord_lock:
+                                        received_coords = (x_, y_, or_)
+                                    print(f"[Jetson] Received coordinate: {x_:.3f}, {y_:.3f}, Orientation: {or_:.6f}")
+                                    if not gotFirstCoord:
+                                        gotFirstCoord = True # if the first coordinate had been found
+                                    request_pos = False # drop flag for requesting position
+                                    break  # Process only one message per request
+                                else:
+                                    print(f"[Jetson] Invalid message format: expected 3 parts, got {len(parts)}")
+                            except Exception as e:
+                                print(f"[Jetson] Error parsing message: '{message}' ({e})")
                 else:
-                    print("[Jetson] No message received")
+                    print("[Jetson] No data received")
+                    time.sleep(0.1)  # Brief pause if no data
             except Exception as e:
                 print(f"[Jetson] Socket error: {e}")
-            #finally:
-                #print("[Jetson] Closing connection after receiving first coordinate")
-                #jetbot_tcp.close()
+                time.sleep(1)  # Pause on socket error
     
 def get_args():
     """Get arguments from command-line"""
