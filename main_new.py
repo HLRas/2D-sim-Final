@@ -515,11 +515,11 @@ def run(clock, car, game_map, caption):
             if len(car_positions) % 60 == 0:  # Debug every 60 frames
                 print(f"[CSV] Recorded {len(car_positions)} positions")
         
-        # Check if path following just stopped and save positions
+        # Check if path following just stopped (but don't save yet - wait for parking confirmation)
         elif HEADLESS_MODE and path_following_started and not (car.carrot_following or car.cross_following):
-            print("[CSV] Path following stopped, saving positions...")
-            save_positions_to_csv()
-            path_following_started = False  # Reset flag
+            print("[CSV] Path following stopped, waiting for parking confirmation...")
+            # Don't save here - wait for successful parking
+            # path_following_started remains True until successful parking
         
         # Check parking status
         for space in game_map.parking_spaces:
@@ -536,9 +536,10 @@ def run(clock, car, game_map, caption):
                     print("[DEBUG] Simulation completed successfully!")
                     print(wheel_speed_queue)
                     
-                    # Save position data to CSV
+                    # Save position data to CSV (only once when successfully parked)
                     if HEADLESS_MODE and car_positions:
                         save_positions_to_csv()
+                        path_following_started = False  # Reset flag
                     
                     pygame.quit()
                     return
