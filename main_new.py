@@ -472,6 +472,11 @@ def run(clock, car, game_map, caption):
                     new_pos = (car.x, car.y)
                     print(f"[Closed Loop] Position change: {old_pos} -> {new_pos}")
                     
+                    # Record the TCP-corrected position immediately
+                    if HEADLESS_MODE and path_following_started and (car.carrot_following or car.cross_following):
+                        car_positions.append([car.x, car.y, car.angle])
+                        print(f"[CSV] Recorded TCP-corrected position at frame {frame_count}")
+                    
                     # Store TCP position for restoration after physics update
                     run.tcp_position_this_frame = (x, y, orien)
 
