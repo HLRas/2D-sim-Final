@@ -382,6 +382,11 @@ def run(clock, car, game_map, caption):
             
         # ---
         frame_count += 1
+        
+        # Debug closed-loop status every 60 frames
+        if HEADLESS_MODE and closedLoop and frame_count % 60 == 0:
+            print(f"[Debug] Frame {frame_count}: request_pos={request_pos}, time_since_last_request={(closedLoop_now - closedLoop_prev):.2f}s")
+        
         '''
         if rerunSim: # If a new coordinate is received, rerun the sim
             run(clock, car, game_map, caption)
@@ -399,6 +404,12 @@ def run(clock, car, game_map, caption):
             
             if coords:
                 x, y, orien = coords
+                
+                # Debug: Print what type of coordinate processing this is
+                if not coordinate_processed:
+                    print(f"[DEBUG] Processing INITIAL coordinate at frame {frame_count}")
+                else:
+                    print(f"[DEBUG] Processing CLOSED-LOOP coordinate at frame {frame_count}")
                 
                 # Only do pathfinding on the first coordinate
                 if not coordinate_processed:
@@ -454,9 +465,15 @@ def run(clock, car, game_map, caption):
                         print("[DEBUG] No available parking space found!")
                 else:
                     # This is a closed-loop position update, don't redo pathfinding
+                    old_pos = (car.x, car.y)
                     print(f"[Closed Loop] Updated car position to ({x:.1f}, {y:.1f}) with orientation {math.degrees(orien)}°")
                     car.set_position((x,y))
                     car.set_orientation(orien)
+                    new_pos = (car.x, car.y)
+                    print(f"[Closed Loop] Position change: {old_pos} -> {new_pos}")
+                    
+                    # Store TCP position for restoration after physics update
+                    run.tcp_position_this_frame = (x, y, orien)
 
         # Handle automated pathfinding
         if AUTOPATH_FOLLOW and not HEADLESS_MODE:
@@ -506,17 +523,25 @@ def run(clock, car, game_map, caption):
             # In headless mode, stil need to process pygame event to prevent hanging
             pygame.event.pump()
 
+        # Record position during path following (BEFORE physics update to capture TCP corrections)
+        if HEADLESS_MODE and path_following_started and (car.carrot_following or car.cross_following):
+            car_positions.append([car.x, car.y, car.angle])
+            if len(car_positions) % 60 == 0:  # Debug every 60 frames
+                print(f"[CSV] Recorded {len(car_positions)} positions")
+
         # Update path followig if active
         car.update_path_following(dt)
 
         # Update car physics
         car.find_next_pos(dt)
         
-        # Record position during path following (headless mode only)
-        if HEADLESS_MODE and path_following_started and (car.carrot_following or car.cross_following):
-            car_positions.append([car.x, car.y, car.angle])
-            if len(car_positions) % 60 == 0:  # Debug every 60 frames
-                print(f"[CSV] Recorded {len(car_positions)} positions")
+        # If we just received a TCP update this frame, restore the TCP position
+        if HEADLESS_MODE and hasattr(run, 'tcp_position_this_frame'):
+            tcp_x, tcp_y, tcp_angle = run.tcp_position_this_frame
+            car.set_position((tcp_x, tcp_y))
+            car.set_orientation(tcp_angle)
+            print(f"[Closed Loop] Restored TCP position after physics: ({tcp_x:.1f}, {tcp_y:.1f})")
+            delattr(run, 'tcp_position_this_frame')  # Clear the flag
         
         # Check if path following just stopped (but don't save yet - wait for parking confirmation)
         elif HEADLESS_MODE and path_following_started and not (car.carrot_following or car.cross_following):
