@@ -399,13 +399,14 @@ def run(clock, car, game_map, caption):
             
             if coords:
                 x, y, orien = coords
-                print(f"[Jetson] Setting car position to ({x:.1f}, {y:.1f}) with orientation {math.degrees(orien)}° at frame {frame_count}")
-                car.set_position((x,y))
-                car.set_orientation(orien)
-
+                
                 # Only do pathfinding on the first coordinate
                 if not coordinate_processed:
                     coordinate_processed = True
+                    
+                    print(f"[Jetson] Setting car position to ({x:.1f}, {y:.1f}) with orientation {math.degrees(orien)}° at frame {frame_count}")
+                    car.set_position((x,y))
+                    car.set_orientation(orien)
                     
                     # Execute pathfinding once after receiving first coordinate
                     # Set start position
@@ -454,6 +455,8 @@ def run(clock, car, game_map, caption):
                 else:
                     # This is a closed-loop position update, don't redo pathfinding
                     print(f"[Closed Loop] Updated car position to ({x:.1f}, {y:.1f}) with orientation {math.degrees(orien)}°")
+                    car.set_position((x,y))
+                    car.set_orientation(orien)
 
         # Handle automated pathfinding
         if AUTOPATH_FOLLOW and not HEADLESS_MODE:
