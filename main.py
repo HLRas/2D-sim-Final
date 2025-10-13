@@ -498,11 +498,11 @@ def run(clock, car, game_map, caption):
                 print(f"[CSV] Recorded {len(car_positions)} positions")
         
         # Check if path following just stopped and save positions
-        elif HEADLESS_MODE and path_following_started and not (car.carrot_following or car.cross_following):
+        """elif HEADLESS_MODE and path_following_started and not (car.carrot_following or car.cross_following):
             print("[CSV] Path following stopped, saving positions...")
             save_positions_to_csv()
             path_following_started = False  # Reset flag
-        
+        """
         # Check parking status
         for space in game_map.parking_spaces:
             if space.is_car_in_space(car):
