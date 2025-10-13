@@ -378,6 +378,7 @@ def run(clock, car, game_map, caption):
         if HEADLESS_MODE and closedLoop and not request_pos and closedLoop_now - closedLoop_prev < closedLoop_delay:
             request_pos = True
             closedLoop_prev = closedLoop_now
+            print(f"[DEBUG] Requesting new pos... at {closedLoop_now-start_time_follow}")
             
         # ---
         frame_count += 1
