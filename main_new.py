@@ -532,14 +532,18 @@ def run(clock, car, game_map, caption):
             # In headless mode, stil need to process pygame event to prevent hanging
             pygame.event.pump()
 
-        # Don't record regular physics positions - only TCP-corrected ones
-        # (Regular position recording removed to only capture TCP updates)
-
         # Update path followig if active
         car.update_path_following(dt)
 
         # Update car physics
         car.find_next_pos(dt)
+        
+        # Sample positions along the simulation path (for red marks on blue trajectory)
+        if HEADLESS_MODE and path_following_started and (car.carrot_following or car.cross_following):
+            # Sample every 10 frames to get reasonable density of red marks
+            if frame_count % 10 == 0:
+                car_positions.append([car.x, car.y, car.angle])
+                print(f"[CSV] Sampled simulation position #{len(car_positions)} at frame {frame_count}: ({car.x:.1f}, {car.y:.1f})")
         
         # If we just received a TCP update this frame, restore the TCP position
         if HEADLESS_MODE and hasattr(run, 'tcp_position_this_frame'):
