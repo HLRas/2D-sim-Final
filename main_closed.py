@@ -380,7 +380,7 @@ def run(clock, car, game_map, caption):
             closedLoop_prev = closedLoop_now
             print(f"[DEBUG] Requesting new pos at {closedLoop_now-start_time_follow}")
         else:
-            print(f"waiting for closed loop: {closedLoop_now-start_time_follow}")
+            print(f"waiting for closed loop: {closedLoop_now-start_time_follow} {request_pos} {closedLoop} {HEADLESS_MODE}")
             
         # ---
         frame_count += 1
