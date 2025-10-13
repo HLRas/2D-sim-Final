@@ -28,7 +28,7 @@ request_pos = True
 refreshDelay = 10000 # get new coord every second..?
 rerunSim = False
 closedLoop = False
-closedLoop_delay = 0.3
+closedLoop_delay = 1
 
 # --- Arduino Serial Communication for wheel speeds ---
 arduino_serial = None
@@ -214,7 +214,7 @@ def tcp_receiver_thread():
             except Exception as e:
                 print(f"[Jetson] Socket error: {e}")
                 time.sleep(1)  # Pause on socket error
-    
+
 def get_args():
     """Get arguments from command-line"""
     global HEADLESS_MODE, AUTOPATH_FOLLOW, PATHFOLLOW_METHOD, ENABLE_ARDUINO
@@ -346,7 +346,7 @@ def run_simulation(layout_type):
         run(clock, car, game_map, caption)
 
 def run(clock, car, game_map, caption):
-    global received_coords, last_coord_time, receiver_thread, arduino_comm_thread, stop, start_time_follow, closedLoop, closedLoop_prev, request_pos
+    global received_coords, last_coord_time, receiver_thread, arduino_comm_thread, stop, start_time_follow
 
     # Performance tracking
     frame_count = 0
@@ -375,18 +375,12 @@ def run(clock, car, game_map, caption):
 
         #Closed loop handling
         closedLoop_now = time.time()
-        if HEADLESS_MODE and closedLoop and not request_pos and (closedLoop_now - closedLoop_prev) >= closedLoop_delay:
+        if HEADLESS_MODE and closedLoop and not request_pos and closedLoop_now - closedLoop_prev < closedLoop_delay:
             request_pos = True
             closedLoop_prev = closedLoop_now
-            print(f"[Closed Loop] Requesting position update after {closedLoop_delay}s")
             
         # ---
         frame_count += 1
-        
-        # Debug closed-loop status every 60 frames
-        if HEADLESS_MODE and closedLoop and frame_count % 60 == 0:
-            print(f"[Debug] Frame {frame_count}: request_pos={request_pos}, time_since_last_request={(closedLoop_now - closedLoop_prev):.2f}s")
-        
         '''
         if rerunSim: # If a new coordinate is received, rerun the sim
             run(clock, car, game_map, caption)
@@ -397,93 +391,58 @@ def run(clock, car, game_map, caption):
             queue_wheel_speeds(speeds[0], speeds[1], time.time()-start_time_follow)
         
         # --- Check for received coordinates (headless only) ---
-        if HEADLESS_MODE and received_coords is not None:
+        if HEADLESS_MODE and not coordinate_processed:
             with coord_lock:
                 coords = received_coords
-                received_coords = None  # Clear the coordinate so we don't process it again
-            
             if coords:
                 x, y, orien = coords
-                
-                # Debug: Print what type of coordinate processing this is
-                if not coordinate_processed:
-                    print(f"[DEBUG] Processing INITIAL coordinate at frame {frame_count}")
-                else:
-                    print(f"[DEBUG] Processing CLOSED-LOOP coordinate at frame {frame_count}")
-                
-                # Only do pathfinding on the first coordinate
-                if not coordinate_processed:
-                    coordinate_processed = True
-                    
-                    print(f"[Jetson] Setting car position to ({x:.1f}, {y:.1f}) with orientation {math.degrees(orien)}° at frame {frame_count}")
-                    car.set_position((x,y))
-                    car.set_orientation(orien)
-                    
-                    # Execute pathfinding once after receiving first coordinate
-                    # Set start position
-                    car_center = car.get_rect().center
-                    print(f"[DEBUG] Car center after position update: {car_center}")
-                    cube = game_map.get_cube(car_center)
-                    if cube:
-                        if game_map.start:
-                            game_map.start.make_clear()
-                            game_map.mark_dirty(game_map.start)
-                        cube.make_start()
-                        game_map.start = cube
-                        game_map.mark_dirty(cube)
-                        print(f"[Jetson] Auto-set start position at ({car.x:.1f}, {car.y:.1f})")
-                    
-                    # Find nearest parking space and pathfind
-                    print(f"[DEBUG] Finding nearest parking space from car position")
-                    nearest_space = game_map._find_nearest_parking_space(car)
-                    if nearest_space and nearest_space.target_cube:
-                        target_pos = nearest_space.get_target_position()
-                        print(f"[DEBUG] Selected parking space target position: {target_pos}")
-                        game_map.end = nearest_space.target_cube
-                        game_map._update_neighbors_if_needed()
-                        game_map.pathfinder.clear_path(game_map.cubes, game_map.mark_dirty)
-                        path_found = game_map.pathfinder.pathfind(game_map.cubes, game_map.start, game_map.end, game_map.mark_dirty)
-                        if path_found:
-                            start_time_follow = time.time()
-                            path_following_started = True  # Start position tracking
-                            car_positions.clear()  # Clear any previous positions
-                            if PATHFOLLOW_METHOD == 0: # Cross Track
-                                car.cross_start_following(game_map.pathfinder.get_smooth_points())
-                                print(f"[Cross] Auto-started cross-track pathfinding to parking space")
-                            else: # Default to carrot
-                                car.carrot_start_following(game_map.pathfinder.get_smooth_points())
-                                print(f"[Carrot] Auto started carrot pathfinding to parking space")
-                            print(f"[CSV] Started position tracking")
-                            
-                            # Enable closed loop position updates
-                            closedLoop = True
-                            closedLoop_prev = time.time()
-                            print(f"[Closed Loop] Enabled with {closedLoop_delay}s interval")
-                            
-                            # Record initial TCP position
-                            car_positions.append([car.x, car.y, car.angle])
-                            print(f"[CSV] Recorded initial TCP position: ({car.x:.1f}, {car.y:.1f})")
-                        else:
-                            print("[DEBUG] Pathfinding failed!")
-                    else:
-                        print("[DEBUG] No available parking space found!")
-                else:
-                    # This is a closed-loop position update, don't redo pathfinding
-                    old_pos = (car.x, car.y)
-                    print(f"[Closed Loop] Updated car position to ({x:.1f}, {y:.1f}) with orientation {math.degrees(orien)}°")
-                    car.set_position((x,y))
-                    car.set_orientation(orien)
-                    new_pos = (car.x, car.y)
-                    print(f"[Closed Loop] Position change: {old_pos} -> {new_pos}")
-                    
-                    # Record the TCP-corrected position immediately
-                    if HEADLESS_MODE and path_following_started and (car.carrot_following or car.cross_following):
-                        car_positions.append([car.x, car.y, car.angle])
-                        print(f"[CSV] Recorded TCP-corrected position #{len(car_positions)} at frame {frame_count}: ({car.x:.1f}, {car.y:.1f})")
-                    
-                    # Store TCP position for restoration after physics update
-                    run.tcp_position_this_frame = (x, y, orien)
+                print(f"[Jetson] Setting car position to ({x:.1f}, {y:.1f}) with orientation {math.degrees(orien)}° at frame {frame_count}")
+                car.set_position((x,y))
+                car.set_orientation(orien)
 
+                coordinate_processed = True
+
+                # Execute pathfinding once after receiving coordinates
+                # Set start position
+                car_center = car.get_rect().center
+                print(f"[DEBUG] Car center after position update: {car_center}")
+                cube = game_map.get_cube(car_center)
+                if cube:
+                    if game_map.start:
+                        game_map.start.make_clear()
+                        game_map.mark_dirty(game_map.start)
+                    cube.make_start()
+                    game_map.start = cube
+                    game_map.mark_dirty(cube)
+                    print(f"[Jetson] Auto-set start position at ({car.x:.1f}, {car.y:.1f})")
+                
+                # Find nearest parking space and pathfind
+                print(f"[DEBUG] Finding nearest parking space from car position")
+                nearest_space = game_map._find_nearest_parking_space(car)
+                if nearest_space and nearest_space.target_cube:
+                    target_pos = nearest_space.get_target_position()
+                    print(f"[DEBUG] Selected parking space target position: {target_pos}")
+                    game_map.end = nearest_space.target_cube
+                    game_map._update_neighbors_if_needed()
+                    game_map.pathfinder.clear_path(game_map.cubes, game_map.mark_dirty)
+                    path_found = game_map.pathfinder.pathfind(game_map.cubes, game_map.start, game_map.end, game_map.mark_dirty)
+                    if path_found:
+                        start_time_follow = time.time()
+                        path_following_started = True  # Start position tracking
+                        car_positions.clear()  # Clear any previous positions
+                        if PATHFOLLOW_METHOD == 0: # Cross Track
+                            car.cross_start_following(game_map.pathfinder.get_smooth_points())
+                            print(f"[Cross] Auto-started cross-track pathfinding to parking space")
+                        else: # Default to carrot
+                            car.carrot_start_following(game_map.pathfinder.get_smooth_points())
+                            print(f"[Carrot] Auto started carrot pathfinding to parking space")
+                        print(f"[CSV] Started position tracking")
+                    else:
+                        print("[DEBUG] Pathfinding failed!")
+                else:
+                    print("[DEBUG] No available parking space found!")
+
+# hallo????
         # Handle automated pathfinding
         if AUTOPATH_FOLLOW and not HEADLESS_MODE:
             # Normal auto-pathfinding for GUI mode
@@ -538,33 +497,18 @@ def run(clock, car, game_map, caption):
         # Update car physics
         car.find_next_pos(dt)
         
-        # Sample positions along the simulation path (for red marks on blue trajectory)
+        # Record position during path following (headless mode only)
         if HEADLESS_MODE and path_following_started and (car.carrot_following or car.cross_following):
-            # Sample every 10 frames to get reasonable density of red marks
-            if frame_count % 10 == 0:
-                car_positions.append([car.x, car.y, car.angle])
-                print(f"[CSV] Sampled simulation position #{len(car_positions)} at frame {frame_count}: ({car.x:.1f}, {car.y:.1f})")
+            car_positions.append([car.x, car.y, car.angle])
+            if len(car_positions) % 60 == 0:  # Debug every 60 frames
+                print(f"[CSV] Recorded {len(car_positions)} positions")
         
-        # If we just received a TCP update this frame, restore the TCP position
-        if HEADLESS_MODE and hasattr(run, 'tcp_position_this_frame'):
-            tcp_x, tcp_y, tcp_angle = run.tcp_position_this_frame
-            car.set_position((tcp_x, tcp_y))
-            car.set_orientation(tcp_angle)
-            print(f"[Closed Loop] Restored TCP position after physics: ({tcp_x:.1f}, {tcp_y:.1f})")
-            
-            # Record a TCP-corrected position (these will be additional red marks showing ArUco corrections)
-            if path_following_started and (car.carrot_following or car.cross_following):
-                car_positions.append([car.x, car.y, car.angle])
-                print(f"[CSV] Added TCP-corrected position #{len(car_positions)} at frame {frame_count}: ({car.x:.1f}, {car.y:.1f})")
-            
-            delattr(run, 'tcp_position_this_frame')  # Clear the flag
-        
-        # Check if path following just stopped (but don't save yet - wait for parking confirmation)
-        elif HEADLESS_MODE and path_following_started and not (car.carrot_following or car.cross_following):
-            print("[CSV] Path following stopped, waiting for parking confirmation...")
-            # Don't save here - wait for successful parking
-            # path_following_started remains True until successful parking
-        
+        # Check if path following just stopped and save positions
+        """elif HEADLESS_MODE and path_following_started and not (car.carrot_following or car.cross_following):
+            print("[CSV] Path following stopped, saving positions...")
+            save_positions_to_csv()
+            path_following_started = False  # Reset flag
+        """
         # Check parking status
         for space in game_map.parking_spaces:
             if space.is_car_in_space(car):
@@ -580,10 +524,9 @@ def run(clock, car, game_map, caption):
                     print("[DEBUG] Simulation completed successfully!")
                     print(wheel_speed_queue)
                     
-                    # Save position data to CSV (only once when successfully parked)
+                    # Save position data to CSV
                     if HEADLESS_MODE and car_positions:
                         save_positions_to_csv()
-                        path_following_started = False  # Reset flag
                     
                     pygame.quit()
                     return
