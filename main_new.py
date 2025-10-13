@@ -459,6 +459,10 @@ def run(clock, car, game_map, caption):
                             closedLoop = True
                             closedLoop_prev = time.time()
                             print(f"[Closed Loop] Enabled with {closedLoop_delay}s interval")
+                            
+                            # Record initial TCP position
+                            car_positions.append([car.x, car.y, car.angle])
+                            print(f"[CSV] Recorded initial TCP position: ({car.x:.1f}, {car.y:.1f})")
                         else:
                             print("[DEBUG] Pathfinding failed!")
                     else:
@@ -475,7 +479,7 @@ def run(clock, car, game_map, caption):
                     # Record the TCP-corrected position immediately
                     if HEADLESS_MODE and path_following_started and (car.carrot_following or car.cross_following):
                         car_positions.append([car.x, car.y, car.angle])
-                        print(f"[CSV] Recorded TCP-corrected position at frame {frame_count}")
+                        print(f"[CSV] Recorded TCP-corrected position #{len(car_positions)} at frame {frame_count}: ({car.x:.1f}, {car.y:.1f})")
                     
                     # Store TCP position for restoration after physics update
                     run.tcp_position_this_frame = (x, y, orien)
@@ -528,11 +532,8 @@ def run(clock, car, game_map, caption):
             # In headless mode, stil need to process pygame event to prevent hanging
             pygame.event.pump()
 
-        # Record position during path following (BEFORE physics update to capture TCP corrections)
-        if HEADLESS_MODE and path_following_started and (car.carrot_following or car.cross_following):
-            car_positions.append([car.x, car.y, car.angle])
-            if len(car_positions) % 60 == 0:  # Debug every 60 frames
-                print(f"[CSV] Recorded {len(car_positions)} positions")
+        # Don't record regular physics positions - only TCP-corrected ones
+        # (Regular position recording removed to only capture TCP updates)
 
         # Update path followig if active
         car.update_path_following(dt)
@@ -546,6 +547,14 @@ def run(clock, car, game_map, caption):
             car.set_position((tcp_x, tcp_y))
             car.set_orientation(tcp_angle)
             print(f"[Closed Loop] Restored TCP position after physics: ({tcp_x:.1f}, {tcp_y:.1f})")
+            
+            # Record the restored position if we're actively path following
+            if path_following_started and (car.carrot_following or car.cross_following):
+                # Update the last recorded position to the restored one
+                if car_positions:
+                    car_positions[-1] = [car.x, car.y, car.angle]
+                    print(f"[CSV] Updated last position to restored TCP coordinates: ({car.x:.1f}, {car.y:.1f})")
+            
             delattr(run, 'tcp_position_this_frame')  # Clear the flag
         
         # Check if path following just stopped (but don't save yet - wait for parking confirmation)
