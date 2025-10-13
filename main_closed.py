@@ -27,7 +27,7 @@ receiver_thread = None
 request_pos = True
 refreshDelay = 10000 # get new coord every second..?
 rerunSim = False
-closedLoop = False
+closedLoop = True
 closedLoop_delay = 1
 
 # --- Arduino Serial Communication for wheel speeds ---
