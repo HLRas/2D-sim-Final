@@ -182,7 +182,7 @@ def tcp_receiver_thread():
                 data = jetbot_tcp.recv(1024).decode("utf-8")
                 if data:
                     message_buffer += data
-                    
+                    print(message_buffer)
                     # Process all complete messages in buffer
                     while '\n' in message_buffer:
                         # Extract one complete message (up to newline)
