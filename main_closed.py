@@ -204,7 +204,7 @@ def tcp_receiver_thread():
                             else:
                                 print(f"[Jetson] Invalid message format: expected 3 parts, got {len(parts)}")
                         except Exception as e:
-                            print(f"[Jetson] Error parsing message: '{message}' ({e})")
+                            print(f"[Jetson] Error parsing message: '{lastline}' ({e})")
                 else:
                     print("[Jetson] No data received")
                     time.sleep(0.1)  # Brief pause if no data
