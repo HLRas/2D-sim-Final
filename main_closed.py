@@ -183,6 +183,8 @@ def tcp_receiver_thread():
                 if data:
                     message_buffer += data
                     print(message_buffer)
+                    lastline = message_buffer.split('\n')[-1]
+                    print(lastline)
                     # Process all complete messages in buffer
                     while '\n' in message_buffer:
                         # Extract one complete message (up to newline)
