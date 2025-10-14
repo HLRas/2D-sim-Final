@@ -25,8 +25,6 @@ last_coord_time = 0
 coord_lock = threading.Lock()
 receiver_thread = None
 request_pos = True
-refreshDelay = 10000 # get new coord every second..?
-rerunSim = False
 closedLoop = True
 closedLoop_delay = 1
 
@@ -379,15 +377,11 @@ def run(clock, car, game_map, caption):
             request_pos = True
             closedLoop_prev = closedLoop_now
             print(f"[DEBUG] Requesting new pos at {closedLoop_now-start_time_follow}")
-        elif closedLoop and frame_count % 60:
-            print("[DEBUG] Waiting for closed loop")
+        elif closedLoop and frame_count % 120:
+            print(f"[DEBUG] Waiting for closed loop {request_pos} {closedLoop_now - closedLoop_prev}")
             
         # ---
         frame_count += 1
-        '''
-        if rerunSim: # If a new coordinate is received, rerun the sim
-            run(clock, car, game_map, caption)
-        '''
         # Immediately get the wheel speeds and queue them
         if start_time_follow != 0:
             speeds = car.get_speeds()
