@@ -203,7 +203,7 @@ def tcp_receiver_thread():
                                 if not gotFirstCoord:
                                     gotFirstCoord = True # if the first coordinate had been found
                                 request_pos = False # drop flag for requesting position
-                                break  # Process only one message per request
+                                
                             else:
                                 print(f"[Jetson] Invalid message format: expected 3 parts, got {len(parts)}")
                         except Exception as e:
