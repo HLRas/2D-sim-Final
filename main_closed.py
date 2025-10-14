@@ -183,7 +183,7 @@ def tcp_receiver_thread():
                 if data:
                     message_buffer += data
                     print(f"[BUFFER]{message_buffer}")
-                    lastline = message_buffer.split('\n')[-1]
+                    lastline = message_buffer.split('\n')[-2]
                     print(f"[LASTLINE] {lastline}")
                     # Process all complete messages in buffer
                     while '\n' in message_buffer:
