@@ -389,8 +389,8 @@ def run(clock, car, game_map, caption):
             print(f"[DEBUG] Car center after position update: {car_center}")
 
         # We do a bit of hardcoding
-        if car.x > 750:
-            closedLoop = False
+        #if car.x > 750:
+        #    closedLoop = False
         
         frame_count += 1
         # Immediately get the wheel speeds and queue them
