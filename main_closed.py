@@ -26,7 +26,7 @@ coord_lock = threading.Lock()
 receiver_thread = None
 request_pos = True
 closedLoop = True
-closedLoop_delay = 1
+closedLoop_delay = 0.2
 
 # --- Arduino Serial Communication for wheel speeds ---
 arduino_serial = None
@@ -376,8 +376,8 @@ def run(clock, car, game_map, caption):
             request_pos = True
             closedLoop_prev = closedLoop_now
             print(f"[DEBUG] Requesting new pos at {closedLoop_now-start_time_follow}")
-        elif closedLoop and frame_count % 120:
-            print(f"[DEBUG] Waiting for closed loop {request_pos} {closedLoop_now - closedLoop_prev}")
+        #elif closedLoop and frame_count % 120:
+        #    print(f"[DEBUG] Waiting for closed loop {request_pos} {closedLoop_now - closedLoop_prev}")
             
         # ---
         frame_count += 1
