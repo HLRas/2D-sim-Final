@@ -343,7 +343,7 @@ def run_simulation(layout_type):
         run(clock, car, game_map, caption)
 
 def run(clock, car, game_map, caption):
-    global received_coords, last_coord_time, receiver_thread, arduino_comm_thread, stop, start_time_follow, request_pos
+    global received_coords, last_coord_time, receiver_thread, arduino_comm_thread, stop, start_time_follow, request_pos, closedLoop
 
     # Performance tracking
     frame_count = 0
@@ -378,6 +378,8 @@ def run(clock, car, game_map, caption):
             print(f"[DEBUG] Requesting new pos at {closedLoop_now-start_time_follow}")
         #elif closedLoop and frame_count % 120:
         #    print(f"[DEBUG] Waiting for closed loop {request_pos} {closedLoop_now - closedLoop_prev}")
+        
+        # Update car pos after first coordinate
         if coordinate_processed and received_coords:
             x, y, orien = received_coords
             print(f"[Jetson] Setting car position to ({x:.1f}, {y:.1f}) with orientation {math.degrees(orien)}° at frame {frame_count}")
@@ -386,6 +388,9 @@ def run(clock, car, game_map, caption):
             car_center = car.get_rect().center
             print(f"[DEBUG] Car center after position update: {car_center}")
 
+        # We do a bit of hardcoding
+        if car.x > 750:
+            closedLoop = False
         
         frame_count += 1
         # Immediately get the wheel speeds and queue them
