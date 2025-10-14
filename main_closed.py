@@ -172,7 +172,7 @@ def connect_tcp():
         return False
 
 def tcp_receiver_thread():
-    global received_coords, request_pos, gotFirstCoord
+    global received_coords, request_pos, gotFirstCoord, car_positions
     message_buffer = ""
     
     while True:
@@ -195,6 +195,9 @@ def tcp_receiver_thread():
                                 parts = message.split(",")
                                 if len(parts) == 3:
                                     x_, y_, or_ = map(float, parts)
+                                    # REMOVE THIS LATER
+                                    car_positions.append([x_, y_, or_])
+                                    # --------------------
                                     with coord_lock:
                                         received_coords = (x_, y_, or_)
                                     print(f"[Jetson] Received coordinate: {x_:.3f}, {y_:.3f}, Orientation: {or_:.6f}")
@@ -494,12 +497,13 @@ def run(clock, car, game_map, caption):
         # Update car physics
         car.find_next_pos(dt)
         
-        # Record position during path following (headless mode only)
+        # Record position during path following (headless mode only) COME REENABLE THIS!!
+        """
         if HEADLESS_MODE and path_following_started and (car.carrot_following or car.cross_following):
             car_positions.append([car.x, car.y, car.angle])
             if len(car_positions) % 60 == 0:  # Debug every 60 frames
                 print(f"[CSV] Recorded {len(car_positions)} positions")
-        
+        """
         # Check if path following just stopped and save positions
         """elif HEADLESS_MODE and path_following_started and not (car.carrot_following or car.cross_following):
             print("[CSV] Path following stopped, saving positions...")
