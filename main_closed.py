@@ -177,10 +177,11 @@ def tcp_receiver_thread():
     
     while True:
         if request_pos: # If a new coordinate has been requested
+            print("[IM TRYING BOSS]")
             try:
                 # Receive data in chunks and build complete messages
                 data = jetbot_tcp.recv(1024).decode("utf-8")
-                print(f"[DATA] {data}")
+                
                 if data:
                     message_buffer += data
                     
