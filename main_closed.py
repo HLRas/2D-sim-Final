@@ -180,7 +180,7 @@ def tcp_receiver_thread():
             try:
                 # Receive data in chunks and build complete messages
                 data = jetbot_tcp.recv(1024).decode("utf-8")
-                print(data)
+                print(f"[DATA] {data}")
                 if data:
                     message_buffer += data
                     
