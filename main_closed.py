@@ -189,6 +189,7 @@ def tcp_receiver_thread():
                         try:
                             print(f"[Jetson] Raw message: '{lastline}'")
                             parts = lastline.split(",")
+                            print(parts)
                             if len(parts) == 3:
                                 x_, y_, or_ = map(float, parts)
                                 # REMOVE THIS LATER
