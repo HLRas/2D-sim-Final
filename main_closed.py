@@ -172,7 +172,7 @@ def connect_tcp():
         return False
 
 def tcp_receiver_thread():
-    global received_coords, request_pos, gotFirstCoord, car_positions
+    global received_coords, request_pos, gotFirstCoord
     message_buffer = ""
     
     while True:
@@ -378,8 +378,15 @@ def run(clock, car, game_map, caption):
             print(f"[DEBUG] Requesting new pos at {closedLoop_now-start_time_follow}")
         #elif closedLoop and frame_count % 120:
         #    print(f"[DEBUG] Waiting for closed loop {request_pos} {closedLoop_now - closedLoop_prev}")
-            
-        # ---
+        if coordinate_processed and received_coords:
+            x, y, orien = received_coords
+            print(f"[Jetson] Setting car position to ({x:.1f}, {y:.1f}) with orientation {math.degrees(orien)}° at frame {frame_count}")
+            car.set_position((x,y))
+            car.set_orientation(orien)
+            car_center = car.get_rect().center
+            print(f"[DEBUG] Car center after position update: {car_center}")
+
+        
         frame_count += 1
         # Immediately get the wheel speeds and queue them
         if start_time_follow != 0:
