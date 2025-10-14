@@ -182,35 +182,29 @@ def tcp_receiver_thread():
                 data = jetbot_tcp.recv(1024).decode("utf-8")
                 if data:
                     message_buffer += data
-                    print(f"[BUFFER]{message_buffer}")
+                    
                     lastline = message_buffer.split('\n')[-2]
-                    print(f"[LASTLINE] {lastline}")
-                    # Process all complete messages in buffer
-                    while '\n' in message_buffer:
-                        # Extract one complete message (up to newline)
-                        message, message_buffer = message_buffer.split('\n', 1)
-                        message = message.strip()
-                        
-                        if message:  # Process non-empty messages
-                            try:
-                                print(f"[Jetson] Raw message: '{message}'")
-                                parts = message.split(",")
-                                if len(parts) == 3:
-                                    x_, y_, or_ = map(float, parts)
-                                    # REMOVE THIS LATER
-                                    car_positions.append([x_, y_, or_])
-                                    # --------------------
-                                    with coord_lock:
-                                        received_coords = (x_, y_, or_)
-                                    print(f"[Jetson] Received coordinate: {x_:.3f}, {y_:.3f}, Orientation: {or_:.6f}")
-                                    if not gotFirstCoord:
-                                        gotFirstCoord = True # if the first coordinate had been found
-                                    request_pos = False # drop flag for requesting position
-                                    break  # Process only one message per request
-                                else:
-                                    print(f"[Jetson] Invalid message format: expected 3 parts, got {len(parts)}")
-                            except Exception as e:
-                                print(f"[Jetson] Error parsing message: '{message}' ({e})")
+                    
+                    if lastline:  # Process non-empty messages
+                        try:
+                            print(f"[Jetson] Raw message: '{lastline}'")
+                            parts = lastline.split(",")
+                            if len(parts) == 3:
+                                x_, y_, or_ = map(float, parts)
+                                # REMOVE THIS LATER
+                                car_positions.append([x_, y_, or_])
+                                # --------------------
+                                with coord_lock:
+                                    received_coords = (x_, y_, or_)
+                                print(f"[Jetson] Received coordinate: {x_:.3f}, {y_:.3f}, Orientation: {or_:.6f}")
+                                if not gotFirstCoord:
+                                    gotFirstCoord = True # if the first coordinate had been found
+                                request_pos = False # drop flag for requesting position
+                                break  # Process only one message per request
+                            else:
+                                print(f"[Jetson] Invalid message format: expected 3 parts, got {len(parts)}")
+                        except Exception as e:
+                            print(f"[Jetson] Error parsing message: '{message}' ({e})")
                 else:
                     print("[Jetson] No data received")
                     time.sleep(0.1)  # Brief pause if no data
