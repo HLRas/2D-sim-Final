@@ -36,12 +36,13 @@ class ParkingSpace:
         if self.orientation == 'horizontal':
             # Create horizontal parking space
             for i in range(self.height):
-                for j in range(self.width):
+                for j in range(-2,self.width):
                     if i in [1,2,3]:  # Middle row is the gap (entry)
-                        if j == 5 and i == 2:  # Target position
+                        if j == -2 and i == 2:  # Target position
                             self.entry_position = (self.grid_x + j, self.grid_y + i)
                         continue
-                    self.barrier_positions.append((self.grid_x + j, self.grid_y + i))
+                    if j >= 0:
+                        self.barrier_positions.append((self.grid_x + j, self.grid_y + i))
         
         elif self.orientation == 'vertical':
             # Create vertical parking space
