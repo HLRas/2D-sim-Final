@@ -50,6 +50,9 @@ stop = False
 car_positions = []  # Array to store positions during path following
 path_following_started = False
 
+# --- Tester mode position tracking ---
+tester_positions = []  # Array to store positions during tester mode
+
 def save_positions_to_csv():
     """Save car positions to CSV file"""
     if not car_positions:
@@ -82,6 +85,39 @@ def save_positions_to_csv():
         print(f"[CSV] Saved {len(car_positions)} positions to {filename}")
     except Exception as e:
         print(f"[CSV] Error saving positions: {e}")
+
+def save_tester_positions_to_csv():
+    """Save tester mode positions to CSV file"""
+    if not tester_positions:
+        print("[CSV] No tester positions recorded")
+        return
+    
+    # Create output directory if it doesn't exist
+    output_dir = "output"
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    
+    # Find the next available tester output number
+    x = 1
+    while os.path.exists(os.path.join(output_dir, f"tester_output{x}.csv")):
+        x += 1
+    
+    filename = os.path.join(output_dir, f"tester_output{x}.csv")
+    
+    try:
+        with open(filename, 'w', newline='') as csvfile:
+            writer = csv.writer(csvfile)
+            # Write header
+            writer.writerow(['x', 'y', 'orientation'])
+            # Write data (convert orientation from radians to degrees)
+            for position in tester_positions:
+                x_pos, y_pos, orientation_rad = position
+                orientation_deg = math.degrees(orientation_rad)
+                writer.writerow([x_pos, y_pos, orientation_deg])
+        
+        print(f"[CSV] Saved {len(tester_positions)} tester positions to {filename}")
+    except Exception as e:
+        print(f"[CSV] Error saving tester positions: {e}")
 
 def connect_arduino():
     """Connect arduino to jetbot via serial"""
@@ -299,7 +335,7 @@ def run_simulation(layout_type):
     global arduino_comm_thread, receiver_thread, start_time_follow
 
     game_map = Map(layout_type=layout_type)
-    car = Car(78,303)
+    car = Car(100,50)
 
     #Set up display
     layout_names = ["Default Layout", "Empty Layout", "Minimal Layout"]
@@ -367,7 +403,26 @@ def run(clock, car, game_map, caption):
         else:
             prev = now
 
-        #Closed loop handling
+        # tester mode
+        if car.tester_mode:
+            # Record position each cycle during tester mode
+            tester_positions.append([car.x, car.y, car.angle])
+            
+        if car.tester_mode and time.time() - car.test_start < 1:
+            car.wheel_L_speed = 150 # 0.3m/s
+            car.wheel_R_speed = 100 # 0.2m/s
+        if car.tester_mode and time.time() - car.test_start > 4:
+            car.tester_mode = False
+            car.wheel_L_speed = 0
+            car.wheel_R_speed = 0
+            print(car.x)
+            print(car.y)
+            print(math.degrees(car.angle))
+            
+            # Save tester positions to CSV
+            if tester_positions:
+                save_tester_positions_to_csv()
+                tester_positions.clear()  # Clear for next test        #Closed loop handling
         closedLoop_now = time.time()
         if HEADLESS_MODE and closedLoop and not request_pos and closedLoop_now - closedLoop_prev < closedLoop_delay:
             request_pos = True

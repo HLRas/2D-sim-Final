@@ -387,10 +387,6 @@ def run(clock, car, game_map, caption):
             car.set_orientation(orien)
             car_center = car.get_rect().center
             print(f"[DEBUG] Car center after position update: {car_center}")
-
-        # We do a bit of hardcoding
-        if car.x > 750:
-            closedLoop = False
         
         frame_count += 1
         # Immediately get the wheel speeds and queue them

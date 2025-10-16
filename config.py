@@ -26,7 +26,7 @@ ROLLING_FRICTION_RATIO = 0.2  # Fraction of CAR_FRICTION used for rolling fricti
 STATIC_THRESHOLD = 50.0  # Speed threshold for static vs rolling friction (pixels/s)
 MAX_WHEEL_SPEED = 300 # pixels/s (=0.6m/s)
 TURN_RATE = 1
-CAR_WIDTH = 75
+CAR_WIDTH = 65
 CAR_LENGTH = 100
 WHEEL_RADIUS = 10 # consider changing to 16
 

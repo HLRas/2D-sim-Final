@@ -1,6 +1,6 @@
 import pygame
 import numpy as np
-
+import time
 from config import *
 from cubes import Cube
 from parking_space import ParkingSpace
@@ -217,6 +217,14 @@ class Map:
             # Clear path and stop path following
             self.pathfinder.clear_path(self.cubes, self.mark_dirty)
             car.stop_path_following()
+        
+        elif event.key == pygame.K_d:
+            # Testing mode
+            car.wheel_L_speed = 0 # 0.3m/s
+            car.wheel_R_speed = 0 # 0.2m/s
+            car.tester_mode = True
+            car.test_start = time.time()
+
 
     def _find_nearest_parking_space(self, car):
         """Find the nearest available parking space"""
