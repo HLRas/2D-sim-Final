@@ -160,3 +160,4 @@ config_local.py
 *.bak
 *.tmp
 temp/
+output/
