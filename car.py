@@ -61,10 +61,10 @@ class Car:
         self.carrot_arrival_threshold = 25 # Arrival to a point threshold
         self.carrot_arrival_final_thres = 100 # Arrival to the final point threshold
         self.carrot_slowdown_coeff = 0.3 # Slowdown near destination
-        self.carrot_base_speed = 200
+        self.carrot_base_speed = 125
         self.carrot_max_velo_bonus = 0.2 # Maximum velocity maintainence bonus
         self.carrot_lookahead_speed_bonus = 2.0 # Look further depending on speed
-        self.carrot_min_target_speed = 50 # This was 50
+        self.carrot_min_target_speed = 75 # This was 50
         self.carrot_velo_bonus_coeff = 0.1 # Velocity maintainence coeff
         self.carrot_max_turn_rate = 25 # Max turn rate in rad
         self.carrot_command_coeff = 1 # Scale wheel commands by this
@@ -80,9 +80,9 @@ class Car:
         self.cross_arrival_threshold = 30
         self.cross_max_turn_rate = 250 # Max turn rate in rad
         self.cross_heading_scale = 100
-        self.cross_base_speed = 200 # p/s
+        self.cross_base_speed = 125 # p/s
         self.cross_turn_pen_coeff = 0.0 # Turn penalty coefficient
-        self.cross_min_target_speed = 150
+        self.cross_min_target_speed = 75
         self.cross_command_coeff = 1 # Scale wheel commands by this
 
     

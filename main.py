@@ -47,7 +47,7 @@ gotFirstCoord = False
 stop = False
 
 # --- Position tracking for CSV output ---
-car_positions = []  # Array to store positions during path following
+car_positions = []  # Array to positions during path following
 path_following_started = False
 
 # --- Tester mode position tracking ---
