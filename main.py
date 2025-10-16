@@ -410,7 +410,7 @@ def run_simulation(layout_type):
     global arduino_comm_thread, receiver_thread, start_time_follow
 
     game_map = Map(layout_type=layout_type)
-    car = Car(100,50)
+    car = Car(50,700)
 
     #Set up display
     layout_names = ["Default Layout", "Empty Layout", "Minimal Layout"]
