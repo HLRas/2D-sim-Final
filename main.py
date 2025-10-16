@@ -53,6 +53,79 @@ path_following_started = False
 # --- Tester mode position tracking ---
 tester_positions = []  # Array to store positions during tester mode
 
+# --- Analyse position vs. speed,time vs. sent_speed,time
+analyse = True
+positions = []
+speeds = []
+sent_speeds = []
+
+def save_analyse_to_csv():
+    """Save analysis data (positions, speeds, sent_speeds) to separate CSV files"""
+    if not positions and not speeds and not sent_speeds:
+        print("[CSV] No analysis data recorded")
+        return
+    
+    # Create output directory if it doesn't exist
+    output_dir = "output"
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    
+    # Find the next available analysis output number
+    x = 1
+    while (os.path.exists(os.path.join(output_dir, f"positions{x}.csv")) or 
+           os.path.exists(os.path.join(output_dir, f"speeds{x}.csv")) or
+           os.path.exists(os.path.join(output_dir, f"sent_speeds{x}.csv"))):
+        x += 1
+    
+    # Save positions CSV
+    if positions:
+        try:
+            filename = os.path.join(output_dir, f"positions{x}.csv")
+            with open(filename, 'w', newline='') as csvfile:
+                writer = csv.writer(csvfile)
+                # Write header
+                writer.writerow(['x', 'y'])
+                # Write data
+                for position in positions:
+                    writer.writerow([position[0], position[1]])
+            print(f"[CSV] Saved {len(positions)} positions to {filename}")
+        except Exception as e:
+            print(f"[CSV] Error saving positions: {e}")
+    
+    # Save speeds CSV
+    if speeds:
+        try:
+            filename = os.path.join(output_dir, f"speeds{x}.csv")
+            with open(filename, 'w', newline='') as csvfile:
+                writer = csv.writer(csvfile)
+                # Write header
+                writer.writerow(['left_speed', 'right_speed', 'time'])
+                # Write data
+                for speed_data in speeds:
+                    speed_pair, timestamp = speed_data
+                    left_speed, right_speed = speed_pair
+                    writer.writerow([left_speed, right_speed, timestamp])
+            print(f"[CSV] Saved {len(speeds)} speed entries to {filename}")
+        except Exception as e:
+            print(f"[CSV] Error saving speeds: {e}")
+    
+    # Save sent_speeds CSV
+    if sent_speeds:
+        try:
+            filename = os.path.join(output_dir, f"sent_speeds{x}.csv")
+            with open(filename, 'w', newline='') as csvfile:
+                writer = csv.writer(csvfile)
+                # Write header
+                writer.writerow(['left_speed', 'right_speed', 'time'])
+                # Write data
+                for sent_speed_data in sent_speeds:
+                    left_speed, right_speed, timestamp = sent_speed_data
+                    writer.writerow([left_speed, right_speed, timestamp])
+            print(f"[CSV] Saved {len(sent_speeds)} sent speed entries to {filename}")
+        except Exception as e:
+            print(f"[CSV] Error saving sent speeds: {e}")
+
+
 def save_positions_to_csv():
     """Save car positions to CSV file"""
     if not car_positions:
@@ -133,7 +206,7 @@ def connect_arduino():
 
 def arduino_thread():
     """Thread to handle Arduino communication"""
-    global wheel_speed_queue, restarted
+    global wheel_speed_queue, restarted, sent_speeds
     sendLeft = True
     lastSentLeft = 0
     sendRight = True
@@ -185,6 +258,8 @@ def arduino_thread():
                                 arduino_serial.flush()
                                 print(f"[Python] Sent: {msg} of relative time {timestamp} to Arduino")
                                 lastSentLeft, lastSentRight = left, right
+                                if analyse:
+                                    sent_speeds.append([left, right, time.time()])
                             except Exception as e:
                                 print(f"[Python] Write error: {e}")
                     else:
@@ -376,7 +451,7 @@ def run_simulation(layout_type):
         run(clock, car, game_map, caption)
 
 def run(clock, car, game_map, caption):
-    global received_coords, last_coord_time, receiver_thread, arduino_comm_thread, stop, start_time_follow
+    global received_coords, last_coord_time, receiver_thread, arduino_comm_thread, stop, start_time_follow, speeds, positions
 
     # Performance tracking
     frame_count = 0
@@ -422,11 +497,12 @@ def run(clock, car, game_map, caption):
             # Save tester positions to CSV
             if tester_positions:
                 save_tester_positions_to_csv()
-                tester_positions.clear()  # Clear for next test        #Closed loop handling
-        closedLoop_now = time.time()
-        if HEADLESS_MODE and closedLoop and not request_pos and closedLoop_now - closedLoop_prev < closedLoop_delay:
-            request_pos = True
-            closedLoop_prev = closedLoop_now
+                tester_positions.clear()  # Clear for next test
+
+        # analyse
+        if analyse:
+            positions.append([car.x*2/1000, car.y*2/1000])
+            speeds.append([car.get_speeds(), time.time()])
             
         # ---
         frame_count += 1
@@ -576,7 +652,10 @@ def run(clock, car, game_map, caption):
                     # Save position data to CSV
                     if HEADLESS_MODE and car_positions:
                         save_positions_to_csv()
-                    
+                    if analyse:
+                        save_analyse_to_csv()
+
+
                     pygame.quit()
                     return
             else:
