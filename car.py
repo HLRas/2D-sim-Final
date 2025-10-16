@@ -80,7 +80,8 @@ class Car:
         self.cross_index = 0
         self.cross_base_distance = 100 # Minimum lookahead distance
         self.cross_arrival_threshold = 30
-        self.cross_max_turn_rate = 250 # Max turn rate in rad
+        self.cross_max_turn_rate = 0 # Max turn rate in rad
+        self.cross_max_turn_rate_const = 25
         self.cross_heading_scale = 100
         self.cross_base_speed = 125 # p/s
         self.cross_turn_pen_coeff = 0.0 # Turn penalty coefficient
@@ -379,7 +380,7 @@ class Car:
             self.carrot_max_turn_rate = 0
         else:
             self.carrot_max_turn_rate = self.carrot_max_turn_rate_const
-            
+
         # Update current target based on position
         self._carrot_update_index()
 
@@ -564,6 +565,12 @@ class Car:
                 print("[Cross] No path points")
                 return
             
+            # limit turn rate to 0 initially
+            if time.time() - self.start_time_pathfollow < self.wait_turning:
+                self.cross_max_turn_rate = 0
+            else:
+                self.cross_max_turn_rate = self.cross_max_turn_rate_const
+
             # Find closest point on path
             closest_point, closest_index = self._cross_closest_point()
 
