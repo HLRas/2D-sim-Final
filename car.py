@@ -27,10 +27,11 @@ class Car:
 
         self.tester_mode = False
         self.test_start = 0.0
+        self.test_accel = 2.0
 
         # Vehicle properties
         self.speed = 0.0 # total speed pixels/s
-        self.angle = 0.0 # radians
+        self.angle = math.radians(0) # radians
         self.width = CAR_WIDTH
         self.length = CAR_LENGTH
 
@@ -42,12 +43,6 @@ class Car:
         # Wheel speeds (linear speeds in pixels/s)
         self.wheel_L_speed = 0.0 # pixels/s
         self.wheel_R_speed = 0.0 # pixels/s
-
-        # Vehicle properties
-        self.speed = 0.0 # total speed pixels/s
-        self.angle = 0.0 # radians
-        self.width = CAR_WIDTH
-        self.length = CAR_LENGTH
 
         # Visual representation
         self._create_surface()
@@ -91,6 +86,16 @@ class Car:
         # timing
         self.start_time_pathfollow = 0
         self.wait_turning = 1.0
+
+        # Tank turn
+        self.tank_turn = False
+        self.tank_time_start = 0.0
+        self.tank_time = 0.0
+
+        # Straight mode
+        self.straight_mode = False
+        self.straight_time = 0.0
+        self.straight_time_start = 0.0
     
     """===========================GENERAL FUNCTIONS==============================="""
     def _create_surface(self):
@@ -215,6 +220,12 @@ class Car:
 
         return
     
+    def set_speeds(self, L=0, R=0):
+        """Set car speeds, if empty, stop car"""
+        self.wheel_L_speed = L
+        self.wheel_R_speed = R
+        return
+
     def get_speeds(self):
         """Get wheel speeds in m/s for Arduino communication"""
         # Convert from pixels/s to m/s 

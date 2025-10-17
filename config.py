@@ -16,7 +16,7 @@ TURQUOISE = (64, 224, 208)
 SCREEN_WIDTH = 900
 SCREEN_HEIGHT = 750
 CUBE_SIZE = 25
-FPS = 120
+FPS = 25
 
 # Car physics
 CAR_ACCELERATION = 400.0 #pixels/s^2 (=0.8m/s^2)
@@ -26,7 +26,7 @@ ROLLING_FRICTION_RATIO = 0.2  # Fraction of CAR_FRICTION used for rolling fricti
 STATIC_THRESHOLD = 50.0  # Speed threshold for static vs rolling friction (pixels/s)
 MAX_WHEEL_SPEED = 300 # pixels/s (=0.6m/s)
 TURN_RATE = 1
-CAR_WIDTH = 65
+CAR_WIDTH = 60
 CAR_LENGTH = 100
 WHEEL_RADIUS = 10 # consider changing to 16
 

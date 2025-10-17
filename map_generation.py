@@ -220,8 +220,6 @@ class Map:
         
         elif event.key == pygame.K_d:
             # Testing mode
-            car.wheel_L_speed = 0 # 0.3m/s
-            car.wheel_R_speed = 0 # 0.2m/s
             car.tester_mode = True
             car.test_start = time.time()
 

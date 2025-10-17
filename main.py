@@ -410,7 +410,7 @@ def run_simulation(layout_type):
     global arduino_comm_thread, receiver_thread, start_time_follow
 
     game_map = Map(layout_type=layout_type)
-    car = Car(50,700)
+    car = Car()
 
     #Set up display
     layout_names = ["Default Layout", "Empty Layout", "Minimal Layout"]
@@ -450,8 +450,8 @@ def run_simulation(layout_type):
     elif not HEADLESS_MODE: # Start instantly if not in headless mode
         run(clock, car, game_map, caption)
 
-def run(clock, car, game_map, caption):
-    global received_coords, last_coord_time, receiver_thread, arduino_comm_thread, stop, start_time_follow, speeds, positions
+def run(clock, car:Car, game_map, caption):
+    global received_coords, last_coord_time, receiver_thread, arduino_comm_thread, stop, start_time_follow, speeds, positions, request_pos
 
     # Performance tracking
     frame_count = 0
@@ -477,27 +477,99 @@ def run(clock, car, game_map, caption):
             continue
         else:
             prev = now
+        
+        if stop: # stop car if called
+            car.wheel_L_speed = 0
+            car.wheel_R_speed = 0
+            stop = False
 
-        # tester mode
+        if car.tank_turn:
+            tank_time_elap = time.time() - car.tank_time_start
+            if tank_time_elap < car.tank_time[0]:
+                if car.tank_time[1] == True:
+                    car.set_speeds(50,-50)
+                else:
+                    car.set_speeds(-50,50)
+            else:
+                car.tank_turn = False
+                car.straight_time = get_straighttime([car.x,car.y], target)
+                car.straight_mode = True
+                car.straight_time_start = time.time()
+                
+        if car.straight_mode:
+            straight_time_elap = time.time() - car.straight_time_start
+            if straight_time_elap < car.straight_time:
+                car.set_speeds(50,50)
+            else:
+                car.straight_mode = False
+                car.set_speeds()
+
         if car.tester_mode:
             # Record position each cycle during tester mode
             tester_positions.append([car.x, car.y, car.angle])
+            timepassed = time.time() - car.test_start
+            print(f"{timepassed}: {car.wheel_L_speed/500} | {car.wheel_R_speed/500}")
             
-        if car.tester_mode and time.time() - car.test_start < 1:
-            car.wheel_L_speed = 150 # 0.3m/s
-            car.wheel_R_speed = 100 # 0.2m/s
-        if car.tester_mode and time.time() - car.test_start > 4:
-            car.tester_mode = False
-            car.wheel_L_speed = 0
-            car.wheel_R_speed = 0
-            print(car.x)
-            print(car.y)
-            print(math.degrees(car.angle))
+            # PD Controller parameters
+            Kp = 0.04  # Proportional gain
+            Kd = 0  # Derivative gain
             
-            # Save tester positions to CSV
-            if tester_positions:
-                save_tester_positions_to_csv()
-                tester_positions.clear()  # Clear for next test
+            # Initialize previous errors if not already set
+            if not hasattr(car, 'prev_error_L'):
+                car.prev_error_L = 0
+                car.prev_error_R = 0
+            
+            # Determine desired speeds based on time
+            if timepassed < 1: # move forward
+                desL = 100
+                desR = 100
+                
+            elif timepassed < 3:   # tank turn
+                desL = 100
+                desR = 50
+                    
+            elif timepassed < 5:
+                desL = 50
+                desR = 100
+                    
+            elif timepassed < 7:
+                desL = 100
+                desR = 100
+            
+            else: # end testing
+                desL = 0
+                desR = 0
+                if abs(car.wheel_L_speed) < 0.1 and abs(car.wheel_R_speed) < 0.1:
+                    car.tester_mode = False
+                    car.wheel_L_speed = 0
+                    car.wheel_R_speed = 0
+                    print(car.x)
+                    print(car.y)
+                    print(math.degrees(car.angle))
+                    
+                    # Save tester positions to CSV
+                    if tester_positions:
+                        save_tester_positions_to_csv()
+                        tester_positions.clear()  # Clear for next test
+            
+            # PD Control for Left wheel
+            error_L = (desL - car.wheel_L_speed)
+            derivative_L = (error_L - car.prev_error_L) / dt if dt > 0 else 0
+            control_L = Kp * error_L + Kd * derivative_L
+            car.wheel_L_speed += control_L
+            car.prev_error_L = error_L
+            
+            # PD Control for Right wheel
+            error_R = (desR - car.wheel_R_speed)
+            derivative_R = (error_R - car.prev_error_R) / dt if dt > 0 else 0
+            control_R = Kp * error_R + Kd * derivative_R
+            car.wheel_R_speed += control_R
+            car.prev_error_R = error_R
+            
+            # Optional: Clamp speeds to reasonable limits
+            max_speed = 150  # Maximum wheel speed
+            car.wheel_L_speed = max(-max_speed, min(max_speed, car.wheel_L_speed))
+            car.wheel_R_speed = max(-max_speed, min(max_speed, car.wheel_R_speed))
 
         # analyse
         if analyse:
@@ -639,12 +711,10 @@ def run(clock, car, game_map, caption):
             if space.is_car_in_space(car):
                 if not space.occupied:
                     space.set_occupied(True, game_map.cubes)
-                    stop = True # stop the car!
+                    car.set_speeds() # stop car
+                    car.stop_path_following() # Stop following
                     print(f"[DEBUG] SUCCESS! Car parked in space at frame {frame_count}!")
                     print(f"[DEBUG] Final car position: ({car.get_pos()})")
-
-                    # Send zero speeds to Arduino
-                    # ...
 
                     print("[DEBUG] Simulation completed successfully!")
                     print(wheel_speed_queue)
@@ -655,9 +725,20 @@ def run(clock, car, game_map, caption):
                     if analyse:
                         save_analyse_to_csv()
 
+                    print("[DEBUG] Now executing tank turn")
+                    car.tank_turn = True
+                    # ENABLE THESE LATER WHEN DOING REAL SYSTEM
+                    #request_pos = True
+                    #while request_pos:
+                    #    continue # Pause sim to wait for position
+                    # UPDATE POSITION
+                    car.set_position((car.x-50, car.y+100)) #move car for testing, simulating error
+                    car.set_orientation(math.radians(-20))
+                    car.tank_time_start = time.time()
+                    target = [CUBE_SIZE*(space.grid_x+7), CUBE_SIZE*(space.grid_y+2.5)]
+                    car.tank_time = get_tanktime(pos_c = [car.x,car.y], orient_c=math.degrees(car.angle), pos_d=target)
+                    print(car.tank_time)
 
-                    pygame.quit()
-                    return
             else:
                 # Only set to unoccupied if it's not permanently occupied
                 if space.occupied and not space.permanently_occupied:
@@ -684,6 +765,28 @@ def find_closest(data, timestamp, index=2):
     timestamps = [tp[index] for tp in data]
     return data[bisect.bisect_left(timestamps, timestamp)]
 
+def get_straighttime(pos_c, pos_d, speed=50):
+    dy, dx = pos_d[1] - pos_c[1], pos_d[0] - pos_c[0]
+    d = math.sqrt(dx**2 + dy**2)
+    straight_time = d/speed
+    return straight_time
+
+def get_tanktime(pos_c, orient_c:float, pos_d, thres_deg=5, turn_speed=50):
+    """Calculate the time needed to turn the car, in place, to face the destination"""
+    dy, dx = pos_d[1] - pos_c[1], pos_d[0] - pos_c[0]
+    orient_d = math.degrees(-math.atan(dy/dx))
+
+    delta_orient = orient_d - orient_c
+    clockwise = True if delta_orient < 0 else False
+    print(delta_orient)
+    if abs(delta_orient) > thres_deg:
+        turn_time = abs(CAR_WIDTH/(2*turn_speed)*math.radians(delta_orient))
+    else:
+        turn_time = 0.0
+    return turn_time, clockwise
+
+def execute_tank(tank_time, clockwise, turn_speed=50):
+    pass
 
 def main():
     """Main application entry"""
