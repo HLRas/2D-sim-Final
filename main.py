@@ -725,7 +725,7 @@ def run(clock, car:Car, game_map, caption):
                         print("[DEBUG] Waiting for new position")
                         request_pos = True
                         # get a bunch of positions
-                        scans = 1
+                        """scans = 1
                         i = 0
                         avg_pos = (0,0,0)
                         while i < scans:
@@ -738,6 +738,11 @@ def run(clock, car:Car, game_map, caption):
                         x,y,orient = pos
                         
                         pos = (x, y)
+                        """
+                        while request_pos:
+                            continue
+                        x,y,orient = received_coords
+                        pos = (x,y)
                         print(f"[DEBUG] Updating position to {pos[0]}, {pos[1]} at {math.degrees(orient)}")
                         #car.set_position(pos)
                         #car.set_orientation(orient)
