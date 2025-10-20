@@ -727,13 +727,14 @@ def run(clock, car:Car, game_map, caption):
                         # get a bunch of positions
                         scans = 10
                         i = 0
+                        avg_pos = (0,0,0)
                         while i < scans:
                             if not request_pos:
                                 print("f[DEBUG] Got position {i}")
                                 avg_pos += received_coords
                                 request_pos = True
                                 i += 1
-                        pos = tuple(x / 3 for x in avg_pos)
+                        pos = tuple(x / scans for x in avg_pos)
                         x,y,orient = pos
                         
                         pos = (x, y)
