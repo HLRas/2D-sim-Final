@@ -819,23 +819,23 @@ def get_tanktime(pos_c, orient_c:float, pos_d, thres_deg=5, turn_speed=50):
     orient_d = math.degrees(-math.atan(dy/dx))
 
     delta_orient = orient_d - orient_c
-    aclockwise = True if delta_orient < 0 else False
+    clockwise = True if delta_orient < 0 else False
     
     if abs(delta_orient) > thres_deg:
-        turn_time = abs(CAR_WIDTH/(2*turn_speed)*math.radians(delta_orient))* 5
+        turn_time = abs(CAR_WIDTH/(2*turn_speed)*math.radians(delta_orient))* 2
     else:
         turn_time = 0.0
     print(f"[DEBUG] Found tank time of {turn_time} for {delta_orient}deg")
-    return turn_time, aclockwise
+    return turn_time, clockwise
 
 def execute_tank(car:Car, target, speed=50):
     tank_time_elap = time.time() - car.tank_time_start
     if tank_time_elap < car.tank_time[0]:
         if car.tank_time[1] == True:
-            car.set_speeds(-speed,speed)
+            car.set_speeds(speed,-speed)
 
         else:
-            car.set_speeds(speed,-speed)
+            car.set_speeds(-speed,speed)
         speeds = car.get_speeds()
         queue_wheel_speeds(speeds[0], speeds[1], time.time()-start_time_follow)
         print("[DEBUG] Queued tank speed")
