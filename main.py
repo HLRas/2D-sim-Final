@@ -810,7 +810,7 @@ def find_closest(data, timestamp, index=2):
 def get_straighttime(pos_c, pos_d, speed=50):
     dy, dx = pos_d[1] - pos_c[1], pos_d[0] - pos_c[0]
     d = math.sqrt(dx**2 + dy**2)
-    straight_time = d/speed - 1.5 # shave a bit off to tune
+    straight_time = d/speed - 2 # shave a bit off to tune
     return straight_time
 
 def get_tanktime(pos_c, orient_c:float, pos_d, thres_deg=5, turn_speed=50):
