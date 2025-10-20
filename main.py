@@ -484,25 +484,10 @@ def run(clock, car:Car, game_map, caption):
             stop = False
 
         if car.tank_turn:
-            tank_time_elap = time.time() - car.tank_time_start
-            if tank_time_elap < car.tank_time[0]:
-                if car.tank_time[1] == True:
-                    car.set_speeds(50,-50)
-                else:
-                    car.set_speeds(-50,50)
-            else:
-                car.tank_turn = False
-                car.straight_time = get_straighttime([car.x,car.y], target)
-                car.straight_mode = True
-                car.straight_time_start = time.time()
+            execute_tank(car=car, target=target,speed=50)
                 
         if car.straight_mode:
-            straight_time_elap = time.time() - car.straight_time_start
-            if straight_time_elap < car.straight_time:
-                car.set_speeds(50,50)
-            else:
-                car.straight_mode = False
-                car.set_speeds()
+            execute_straight(car=car, speed=50)
 
         if car.tester_mode:
             # Record position each cycle during tester mode
@@ -731,16 +716,27 @@ def run(clock, car:Car, game_map, caption):
                     #while request_pos:
                     #    continue # Pause sim to wait for position
                     # UPDATE POSITION
+                    print("[DEBUG] Now executing tank turn")
+                    car.tank_turn = True
                     if not HEADLESS_MODE:
-                        print("[DEBUG] Now executing tank turn")
-                        car.tank_turn = True
                         car.set_position((car.x-50, car.y+100)) #move car for testing, simulating error
                         car.set_orientation(math.radians(-20))
-                        car.tank_time_start = time.time()
-                        target = [CUBE_SIZE*(space.grid_x+7), CUBE_SIZE*(space.grid_y+2.5)]
-                        car.tank_time = get_tanktime(pos_c = [car.x,car.y], orient_c=math.degrees(car.angle), pos_d=target)
-                        print(car.tank_time)
+                    else:
+                        print("[DEBUG] Waiting for new position")
+                        request_pos = True
+                        while request_pos:
+                            continue
+                        
+                        pos = (received_coords[0], received_coords[1])
+                        orient = received_coords[2]
+                        print(f"[DEBUG] Updating position to {pos[0]}, {pos[1]} at {math.degrees(pos[2])}")
+                        car.set_position(pos)
+                        car.set_orientation(orient)
 
+                    car.tank_time_start = time.time()
+                    target = [CUBE_SIZE*(space.grid_x+7), CUBE_SIZE*(space.grid_y+2.5)]
+                    car.tank_time = get_tanktime(pos_c = [car.x,car.y], orient_c=math.degrees(car.angle), pos_d=target)
+            
             else:
                 # Only set to unoccupied if it's not permanently occupied
                 if space.occupied and not space.permanently_occupied:
@@ -787,8 +783,26 @@ def get_tanktime(pos_c, orient_c:float, pos_d, thres_deg=5, turn_speed=50):
         turn_time = 0.0
     return turn_time, clockwise
 
-def execute_tank(tank_time, clockwise, turn_speed=50):
-    pass
+def execute_tank(car:Car, target, speed=50):
+    tank_time_elap = time.time() - car.tank_time_start
+    if tank_time_elap < car.tank_time[0]:
+        if car.tank_time[1] == True:
+            car.set_speeds(speed,-speed)
+        else:
+            car.set_speeds(-speed,speed)
+    else:
+        car.tank_turn = False
+        car.straight_time = get_straighttime([car.x,car.y], target)
+        car.straight_mode = True
+        car.straight_time_start = time.time()
+
+def execute_straight(car:Car, speed=50):
+    straight_time_elap = time.time() - car.straight_time_start
+    if straight_time_elap < car.straight_time:
+        car.set_speeds(speed,speed)
+    else:
+        car.straight_mode = False
+        car.set_speeds()
 
 def main():
     """Main application entry"""
