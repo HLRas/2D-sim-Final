@@ -725,19 +725,21 @@ def run(clock, car:Car, game_map, caption):
                     if analyse:
                         save_analyse_to_csv()
 
-                    print("[DEBUG] Now executing tank turn")
-                    car.tank_turn = True
+                    
                     # ENABLE THESE LATER WHEN DOING REAL SYSTEM
                     #request_pos = True
                     #while request_pos:
                     #    continue # Pause sim to wait for position
                     # UPDATE POSITION
-                    car.set_position((car.x-50, car.y+100)) #move car for testing, simulating error
-                    car.set_orientation(math.radians(-20))
-                    car.tank_time_start = time.time()
-                    target = [CUBE_SIZE*(space.grid_x+7), CUBE_SIZE*(space.grid_y+2.5)]
-                    car.tank_time = get_tanktime(pos_c = [car.x,car.y], orient_c=math.degrees(car.angle), pos_d=target)
-                    print(car.tank_time)
+                    if not HEADLESS_MODE:
+                        print("[DEBUG] Now executing tank turn")
+                        car.tank_turn = True
+                        car.set_position((car.x-50, car.y+100)) #move car for testing, simulating error
+                        car.set_orientation(math.radians(-20))
+                        car.tank_time_start = time.time()
+                        target = [CUBE_SIZE*(space.grid_x+7), CUBE_SIZE*(space.grid_y+2.5)]
+                        car.tank_time = get_tanktime(pos_c = [car.x,car.y], orient_c=math.degrees(car.angle), pos_d=target)
+                        print(car.tank_time)
 
             else:
                 # Only set to unoccupied if it's not permanently occupied
