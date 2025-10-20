@@ -742,10 +742,10 @@ def run(clock, car:Car, game_map, caption):
                         car.set_speeds() #stop
                         speeds = car.get_speeds()
                         queue_wheel_speeds(speeds[0], speeds[1], time.time()-start_time_follow)
+                        stop = True
 
                         car.stop_path_following() # Stop following
-                        print("[DEBUG] Sleeping for 3 seconds...")
-                        time.sleep(3)
+                        
                         print(f"[DEBUG] SUCCESS! Car parked in space at frame {frame_count}!")
                         print(f"[DEBUG] Final car position: ({car.get_pos()})")
 
@@ -769,7 +769,7 @@ def run(clock, car:Car, game_map, caption):
                             request_pos = True
                             # get a bunch of positions
                             while request_pos:
-                                continue
+                                time.sleep(0.01)
                             x,y,orient = received_coords
                             pos = (x,y)
                             print(f"[DEBUG] Updating position to {pos[0]}, {pos[1]} at {math.degrees(orient)}")
@@ -843,7 +843,7 @@ def execute_tank(car:Car, target, speed=50):
         request_pos = True
         print("[DEBUG] Checking position again")
         while request_pos:
-            continue
+            time.sleep(0.01)
         x,y,orient = received_coords
         pos = (x,y)
         car.tank_time = get_tanktime(pos_c=pos, orient_c=orient, pos_d=target)
