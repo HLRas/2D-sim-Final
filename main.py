@@ -822,9 +822,9 @@ def execute_tank(car:Car, target, speed=50):
     tank_time_elap = time.time() - car.tank_time_start
     if tank_time_elap < car.tank_time[0]:
         if car.tank_time[1] == True:
-            car.set_speeds(speed,-speed)
-        else:
             car.set_speeds(-speed,speed)
+        else:
+            car.set_speeds(speed,-speed)
     else:
         car.tank_turn = False
         car.straight_time = get_straighttime([car.x,car.y], target)
