@@ -770,6 +770,7 @@ def run(clock, car:Car, game_map, caption):
                             # get a bunch of positions
                             while request_pos:
                                 time.sleep(0.01)
+                            stop = False
                             x,y,orient = received_coords
                             pos = (x,y)
                             print(f"[DEBUG] Updating position to {pos[0]}, {pos[1]} at {math.degrees(orient)}")
@@ -839,6 +840,7 @@ def execute_tank(car:Car, target, speed=50):
         car.set_speeds() #stop
         speeds = car.get_speeds()
         queue_wheel_speeds(speeds[0], speeds[1], time.time()-start_time_follow)
+        stop = True
         # closed loop
         request_pos = True
         print("[DEBUG] Checking position again")
