@@ -873,6 +873,9 @@ def execute_straight(car:Car, speed=50):
     else:
         car.straight_mode = False
         car.set_speeds()
+        speeds = car.get_speeds()
+        queue_wheel_speeds(speeds[0], speeds[1], time.time()-start_time_follow)
+        stop = True
 
 def main():
     """Main application entry"""
