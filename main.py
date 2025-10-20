@@ -524,7 +524,7 @@ def run(clock, car:Car, game_map, caption):
             stop = False
 
         if car.tank_turn:
-            execute_tank(car=car, target=target,speed=50)
+            execute_tank(car=car, target=target,speed=50, thres_deg=5)
                 
         if car.straight_mode:
             execute_straight(car=car, speed=50)
@@ -810,13 +810,13 @@ def get_tanktime(pos_c, orient_c:float, pos_d, thres_deg=5, turn_speed=50):
     orient_d = math.degrees(-math.atan(dy/dx))
 
     delta_orient = orient_d - orient_c
-    clockwise = True if delta_orient < 0 else False
+    aclockwise = True if delta_orient < 0 else False
     
     if abs(delta_orient) > thres_deg:
         turn_time = abs(CAR_WIDTH/(2*turn_speed)*math.radians(delta_orient))
     else:
         turn_time = 0.0
-    return turn_time, clockwise
+    return turn_time, aclockwise
 
 def execute_tank(car:Car, target, speed=50):
     tank_time_elap = time.time() - car.tank_time_start
@@ -827,9 +827,29 @@ def execute_tank(car:Car, target, speed=50):
             car.set_speeds(speed,-speed)
     else:
         car.tank_turn = False
-        car.straight_time = get_straighttime([car.x,car.y], target)
-        car.straight_mode = True
-        car.straight_time_start = time.time()
+        
+        car.set_speeds() #stop
+
+        # closed loop
+        request_pos = True
+        print("[DEBUG] Checking position again")
+        while request_pos:
+            continue
+        x,y,orient = received_coords
+        pos = (x,y)
+        car.tank_time = get_tanktime(pos_c=pos, orient_c=orient, pos_d=target)
+        if car.tank_time[0] == 0:
+            car.straight_mode = True
+            car.straight_time = get_straighttime([car.x,car.y], target)
+            car.straight_time_start = time.time()
+        else:
+            car.tank_turn = True
+            car.tank_time_start = time.time()
+        print(f"[DEBUG] Updating position to {pos[0]}, {pos[1]} at {math.degrees(orient)}")
+        car.set_position(pos)
+        car.set_orientation(orient)
+        
+        
 
 def execute_straight(car:Car, speed=50):
     straight_time_elap = time.time() - car.straight_time_start
