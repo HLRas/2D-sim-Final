@@ -730,7 +730,7 @@ def run(clock, car:Car, game_map, caption):
                         avg_pos = (0,0,0)
                         while i < scans:
                             if not request_pos:
-                                print("f[DEBUG] Got position {i}")
+                                print(f"[DEBUG] Got position {i}")
                                 avg_pos += received_coords
                                 request_pos = True
                                 i += 1
