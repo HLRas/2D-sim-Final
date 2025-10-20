@@ -283,8 +283,48 @@ def connect_tcp():
     except Exception as e:
         print("[Jetson] Failed to connect, retrying...")
         return False
-
+    
 def tcp_receiver_thread():
+    global received_coords, request_pos, gotFirstCoord
+    message_buffer = ""
+    
+    while True:
+        if request_pos: # If a new coordinate has been requested
+            try:
+                # Receive data in chunks and build complete messages
+                data = jetbot_tcp.recv(1024).decode("utf-8")
+                
+                if data:
+                    message_buffer += data
+                    
+                    lastline = message_buffer.split('\n')[-2]
+                    
+                    if lastline:  # Process non-empty messages
+                        try:
+                            print(f"[Jetson] Raw message: '{lastline}'")
+                            parts = lastline.split(",")
+                            print(parts)
+                            if len(parts) == 3:
+                                x_, y_, or_ = map(float, parts)
+                                
+                                with coord_lock:
+                                    received_coords = (x_, y_, or_)
+                                print(f"[Jetson] Received coordinate: {x_:.3f}, {y_:.3f}, Orientation: {or_:.6f}")
+                                if not gotFirstCoord:
+                                    gotFirstCoord = True # if the first coordinate had been found
+                                request_pos = False # drop flag for requesting position
+                                
+                            else:
+                                print(f"[Jetson] Invalid message format: expected 3 parts, got {len(parts)}")
+                        except Exception as e:
+                            print(f"[Jetson] Error parsing message: '{lastline}' ({e})")
+                else:
+                    print("[Jetson] No data received")
+                    time.sleep(0.1)  # Brief pause if no data
+            except Exception as e:
+                print(f"[Jetson] Socket error: {e}")
+                time.sleep(1)  # Pause on socket error
+"""def tcp_receiver_thread():
     global received_coords, request_pos, gotFirstCoord
     #last_coord_time = float('inf')
     while True:
@@ -319,7 +359,7 @@ def tcp_receiver_thread():
             #finally:
                 #print("[Jetson] Closing connection after receiving first coordinate")
                 #jetbot_tcp.close()
-    
+"""    
 def get_args():
     """Get arguments from command-line"""
     global HEADLESS_MODE, AUTOPATH_FOLLOW, PATHFOLLOW_METHOD, ENABLE_ARDUINO
