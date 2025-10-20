@@ -738,6 +738,9 @@ def run(clock, car:Car, game_map, caption):
                     if not space.occupied:
                         space.set_occupied(True, game_map.cubes)
                         car.set_speeds() # stop car
+                        car.set_speeds() #stop
+                        speeds = car.get_speeds()
+                        queue_wheel_speeds(speeds[0], speeds[1], time.time()-start_time_follow)
                         car.stop_path_following() # Stop following
                         print(f"[DEBUG] SUCCESS! Car parked in space at frame {frame_count}!")
                         print(f"[DEBUG] Final car position: ({car.get_pos()})")
@@ -830,7 +833,8 @@ def execute_tank(car:Car, target, speed=50):
         car.tank_turn = False
         
         car.set_speeds() #stop
-
+        speeds = car.get_speeds()
+        queue_wheel_speeds(speeds[0], speeds[1], time.time()-start_time_follow)
         # closed loop
         request_pos = True
         print("[DEBUG] Checking position again")
