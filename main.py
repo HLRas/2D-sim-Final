@@ -846,7 +846,14 @@ def execute_tank(car:Car, target, speed=50):
         speeds = car.get_speeds()
         queue_wheel_speeds(speeds[0], speeds[1], time.time()-start_time_follow)
         stop = True
+
+        print("[DEBUG] Orientation within threshold, starting straight mode after 2 seconds")
+        time.sleep(2)
+        car.straight_mode = True
+        car.straight_time = get_straighttime([car.x,car.y], target)
+        car.straight_time_start = time.time()
         # closed loop
+        """
         request_pos = True
         print("[DEBUG] Checking position again")
         while request_pos:
@@ -868,7 +875,7 @@ def execute_tank(car:Car, target, speed=50):
         print(f"[DEBUG] Updating position to {pos[0]}, {pos[1]} at {math.degrees(orient)}")
         car.set_position(pos)
         car.set_orientation(orient)
-        
+        """
         
 
 def execute_straight(car:Car, speed=50):
