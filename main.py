@@ -725,7 +725,7 @@ def run(clock, car:Car, game_map, caption):
                         print("[DEBUG] Waiting for new position")
                         request_pos = True
                         # get a bunch of positions
-                        scans = 10
+                        scans = 1
                         i = 0
                         avg_pos = (0,0,0)
                         while i < scans:
