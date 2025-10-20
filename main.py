@@ -757,7 +757,7 @@ def run(clock, car:Car, game_map, caption):
                     #    continue # Pause sim to wait for position
                     # UPDATE POSITION
                     print("[DEBUG] Now executing tank turn")
-                    #car.tank_turn = True
+                    car.tank_turn = True
                     if not HEADLESS_MODE:
                         car.set_position((car.x-50, car.y+100)) #move car for testing, simulating error
                         car.set_orientation(math.radians(-20))
@@ -765,27 +765,13 @@ def run(clock, car:Car, game_map, caption):
                         print("[DEBUG] Waiting for new position")
                         request_pos = True
                         # get a bunch of positions
-                        """scans = 1
-                        i = 0
-                        avg_pos = (0,0,0)
-                        while i < scans:
-                            if not request_pos:
-                                print(f"[DEBUG] Got position {i}")
-                                avg_pos += received_coords
-                                request_pos = True
-                                i += 1
-                        pos = tuple(x / scans for x in avg_pos)
-                        x,y,orient = pos
-                        
-                        pos = (x, y)
-                        """
                         while request_pos:
                             continue
                         x,y,orient = received_coords
                         pos = (x,y)
                         print(f"[DEBUG] Updating position to {pos[0]}, {pos[1]} at {math.degrees(orient)}")
-                        #car.set_position(pos)
-                        #car.set_orientation(orient)
+                        car.set_position(pos)
+                        car.set_orientation(orient)
 
                     car.tank_time_start = time.time()
                     target = [CUBE_SIZE*(space.grid_x+7), CUBE_SIZE*(space.grid_y+2.5)]
@@ -830,7 +816,7 @@ def get_tanktime(pos_c, orient_c:float, pos_d, thres_deg=5, turn_speed=50):
 
     delta_orient = orient_d - orient_c
     clockwise = True if delta_orient < 0 else False
-    print(delta_orient)
+    
     if abs(delta_orient) > thres_deg:
         turn_time = abs(CAR_WIDTH/(2*turn_speed)*math.radians(delta_orient))
     else:
