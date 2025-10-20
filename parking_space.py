@@ -38,7 +38,7 @@ class ParkingSpace:
             for i in range(self.height):
                 for j in range(-2,self.width):
                     if i in [1,2,3]:  # Middle row is the gap (entry)
-                        if j == -2 and i == 2:  # Target position
+                        if j == 4 and i == 2:  # Target position
                             self.entry_position = (self.grid_x + j, self.grid_y + i)
                         continue
                     if j >= 0:
