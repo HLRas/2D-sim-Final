@@ -750,7 +750,8 @@ def run(clock, car:Car, game_map, caption):
                             save_positions_to_csv()
                         if analyse:
                             save_analyse_to_csv()
-
+                        print("[DEBUG] Sleeping for 3 seconds...")
+                        time.sleep(3)
                         print("[DEBUG] Now executing tank turn")
                         car.tank_turn = True
                         if not HEADLESS_MODE:
@@ -839,10 +840,14 @@ def execute_tank(car:Car, target, speed=50):
         pos = (x,y)
         car.tank_time = get_tanktime(pos_c=pos, orient_c=orient, pos_d=target)
         if car.tank_time[0] == 0:
+            print("[DEBUG] Orientation within threshold, starting straight mode after 2 seconds")
+            time.sleep(2)
             car.straight_mode = True
             car.straight_time = get_straighttime([car.x,car.y], target)
             car.straight_time_start = time.time()
         else:
+            print("[DEBUG] Not within threshold, turning again, sleeping 2 seconds")
+            time.sleep(2)
             car.tank_turn = True
             car.tank_time_start = time.time()
         print(f"[DEBUG] Updating position to {pos[0]}, {pos[1]} at {math.degrees(orient)}")
