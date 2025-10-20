@@ -717,7 +717,7 @@ def run(clock, car:Car, game_map, caption):
                     #    continue # Pause sim to wait for position
                     # UPDATE POSITION
                     print("[DEBUG] Now executing tank turn")
-                    car.tank_turn = True
+                    #car.tank_turn = True
                     if not HEADLESS_MODE:
                         car.set_position((car.x-50, car.y+100)) #move car for testing, simulating error
                         car.set_orientation(math.radians(-20))
@@ -729,9 +729,9 @@ def run(clock, car:Car, game_map, caption):
                         
                         pos = (received_coords[0], received_coords[1])
                         orient = received_coords[2]
-                        print(f"[DEBUG] Updating position to {pos[0]}, {pos[1]} at {math.degrees(pos[2])}")
-                        car.set_position(pos)
-                        car.set_orientation(orient)
+                        print(f"[DEBUG] Updating position to {pos[0]}, {pos[1]} at {math.degrees(orient)}")
+                        #car.set_position(pos)
+                        #car.set_orientation(orient)
 
                     car.tank_time_start = time.time()
                     target = [CUBE_SIZE*(space.grid_x+7), CUBE_SIZE*(space.grid_y+2.5)]
