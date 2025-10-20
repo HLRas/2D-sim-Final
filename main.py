@@ -736,12 +736,16 @@ def run(clock, car:Car, game_map, caption):
             for space in game_map.parking_spaces:
                 if space.is_car_in_space(car):
                     if not space.occupied:
+
                         space.set_occupied(True, game_map.cubes)
-                        car.set_speeds() # stop car
+
                         car.set_speeds() #stop
                         speeds = car.get_speeds()
                         queue_wheel_speeds(speeds[0], speeds[1], time.time()-start_time_follow)
+
                         car.stop_path_following() # Stop following
+                        print("[DEBUG] Sleeping for 3 seconds...")
+                        time.sleep(3)
                         print(f"[DEBUG] SUCCESS! Car parked in space at frame {frame_count}!")
                         print(f"[DEBUG] Final car position: ({car.get_pos()})")
 
@@ -753,8 +757,8 @@ def run(clock, car:Car, game_map, caption):
                             save_positions_to_csv()
                         if analyse:
                             save_analyse_to_csv()
-                        print("[DEBUG] Sleeping for 3 seconds...")
-                        time.sleep(3)
+                        
+                        
                         print("[DEBUG] Now executing tank turn")
                         car.tank_turn = True
                         if not HEADLESS_MODE:
