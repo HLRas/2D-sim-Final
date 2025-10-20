@@ -524,7 +524,7 @@ def run(clock, car:Car, game_map, caption):
             stop = False
 
         if car.tank_turn:
-            execute_tank(car=car, target=target,speed=50, thres_deg=5)
+            execute_tank(car=car, target=target,speed=50)
                 
         if car.straight_mode:
             execute_straight(car=car, speed=50)
