@@ -732,55 +732,50 @@ def run(clock, car:Car, game_map, caption):
             path_following_started = False  # Reset flag
         """
         # Check parking status
-        for space in game_map.parking_spaces:
-            if space.is_car_in_space(car):
-                if not space.occupied:
-                    space.set_occupied(True, game_map.cubes)
-                    car.set_speeds() # stop car
-                    car.stop_path_following() # Stop following
-                    print(f"[DEBUG] SUCCESS! Car parked in space at frame {frame_count}!")
-                    print(f"[DEBUG] Final car position: ({car.get_pos()})")
+        if not car.tank_turn and not car.straight_mode:
+            for space in game_map.parking_spaces:
+                if space.is_car_in_space(car):
+                    if not space.occupied:
+                        space.set_occupied(True, game_map.cubes)
+                        car.set_speeds() # stop car
+                        car.stop_path_following() # Stop following
+                        print(f"[DEBUG] SUCCESS! Car parked in space at frame {frame_count}!")
+                        print(f"[DEBUG] Final car position: ({car.get_pos()})")
 
-                    print("[DEBUG] Simulation completed successfully!")
-                    print(wheel_speed_queue)
-                    
-                    # Save position data to CSV
-                    if HEADLESS_MODE and car_positions:
-                        save_positions_to_csv()
-                    if analyse:
-                        save_analyse_to_csv()
+                        print("[DEBUG] Simulation completed successfully!")
+                        print(wheel_speed_queue)
+                        
+                        # Save position data to CSV
+                        if HEADLESS_MODE and car_positions:
+                            save_positions_to_csv()
+                        if analyse:
+                            save_analyse_to_csv()
 
-                    
-                    # ENABLE THESE LATER WHEN DOING REAL SYSTEM
-                    #request_pos = True
-                    #while request_pos:
-                    #    continue # Pause sim to wait for position
-                    # UPDATE POSITION
-                    print("[DEBUG] Now executing tank turn")
-                    car.tank_turn = True
-                    if not HEADLESS_MODE:
-                        car.set_position((car.x-50, car.y+100)) #move car for testing, simulating error
-                        car.set_orientation(math.radians(-20))
-                    else:
-                        print("[DEBUG] Waiting for new position")
-                        request_pos = True
-                        # get a bunch of positions
-                        while request_pos:
-                            continue
-                        x,y,orient = received_coords
-                        pos = (x,y)
-                        print(f"[DEBUG] Updating position to {pos[0]}, {pos[1]} at {math.degrees(orient)}")
-                        car.set_position(pos)
-                        car.set_orientation(orient)
+                        print("[DEBUG] Now executing tank turn")
+                        car.tank_turn = True
+                        if not HEADLESS_MODE:
+                            car.set_position((car.x-50, car.y+100)) #move car for testing, simulating error
+                            car.set_orientation(math.radians(-20))
+                        else:
+                            print("[DEBUG] Waiting for new position")
+                            request_pos = True
+                            # get a bunch of positions
+                            while request_pos:
+                                continue
+                            x,y,orient = received_coords
+                            pos = (x,y)
+                            print(f"[DEBUG] Updating position to {pos[0]}, {pos[1]} at {math.degrees(orient)}")
+                            car.set_position(pos)
+                            car.set_orientation(orient)
 
-                    car.tank_time_start = time.time()
-                    target = [CUBE_SIZE*(space.grid_x+7), CUBE_SIZE*(space.grid_y+2.5)]
-                    car.tank_time = get_tanktime(pos_c = [car.x,car.y], orient_c=math.degrees(car.angle), pos_d=target)
-            
-            else:
-                # Only set to unoccupied if it's not permanently occupied
-                if space.occupied and not space.permanently_occupied:
-                    space.set_occupied(False, game_map.cubes)
+                        car.tank_time_start = time.time()
+                        target = [CUBE_SIZE*(space.grid_x+7), CUBE_SIZE*(space.grid_y+2.5)]
+                        car.tank_time = get_tanktime(pos_c = [car.x,car.y], orient_c=math.degrees(car.angle), pos_d=target)
+                
+                else:
+                    # Only set to unoccupied if it's not permanently occupied
+                    if space.occupied and not space.permanently_occupied:
+                        space.set_occupied(False, game_map.cubes)
         
         if not HEADLESS_MODE:
             game_map.draw()
