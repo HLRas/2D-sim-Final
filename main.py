@@ -822,7 +822,7 @@ def get_tanktime(pos_c, orient_c:float, pos_d, thres_deg=5, turn_speed=50):
     clockwise = True if delta_orient < 0 else False
     
     if abs(delta_orient) > thres_deg:
-        turn_time = abs(CAR_WIDTH/(2*turn_speed)*math.radians(delta_orient))+ 0.4
+        turn_time = abs(CAR_WIDTH/(2*turn_speed)*math.radians(delta_orient))+ 0.7
     else:
         turn_time = 0.0
     print(f"[DEBUG] Found tank time of {turn_time} for {delta_orient}deg")
