@@ -732,11 +732,11 @@ def run(clock, car:Car, game_map, caption):
             path_following_started = False  # Reset flag
         """
         # Check parking status
-        if not car.tank_turn and not car.straight_mode:
+        if car.carrot_following or car.cross_following:
             for space in game_map.parking_spaces:
                 if space.is_car_in_space(car):
                     if not space.occupied:
-
+                        
                         space.set_occupied(True, game_map.cubes)
 
                         car.set_speeds() #stop
