@@ -813,7 +813,7 @@ def get_straighttime(pos_c, pos_d, speed=50):
     straight_time = d/speed - 2 # shave a bit off to tune
     return straight_time
 
-def get_tanktime(pos_c, orient_c:float, pos_d, thres_deg=5, turn_speed=50):
+def get_tanktime(pos_c, orient_c:float, pos_d, thres_deg=2, turn_speed=50):
     """Calculate the time needed to turn the car, in place, to face the destination"""
     dy, dx = pos_d[1] - pos_c[1], pos_d[0] - pos_c[0]
     orient_d = math.degrees(-math.atan(dy/dx))
@@ -822,7 +822,16 @@ def get_tanktime(pos_c, orient_c:float, pos_d, thres_deg=5, turn_speed=50):
     clockwise = True if delta_orient < 0 else False
     
     if abs(delta_orient) > thres_deg:
-        turn_time = abs(CAR_WIDTH/(2*turn_speed)*math.radians(delta_orient)) + 0.6
+        turn_time = abs(CAR_WIDTH/(2*turn_speed)*math.radians(delta_orient))
+        x = turn_time
+        # Scale turn time for better response
+        polynomial = -4.32307692308e-7 * pow(x, 5) + \
+                     6.22319347319e-5 * pow(x, 4) - \
+                     0.00346042540793 * pow(x, 3) + \
+                     0.0931500291375 * pow(x, 2) - \
+                     1.2352733683 * x + \
+                     7.73791666667
+        turn_time *= polynomial
     else:
         turn_time = 0.0
     print(f"[DEBUG] Found tank time of {turn_time} for {delta_orient}deg")
