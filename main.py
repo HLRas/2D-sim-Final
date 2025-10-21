@@ -825,13 +825,14 @@ def get_tanktime(pos_c, orient_c:float, pos_d, thres_deg=2, turn_speed=50):
         turn_time = abs(CAR_WIDTH/(2*turn_speed)*math.radians(delta_orient))
         x = turn_time
         # Scale turn time for better response
-        polynomial = -4.32307692308e-7 * pow(x, 5) + \
+        """polynomial = -4.32307692308e-7 * pow(x, 5) + \
                      6.22319347319e-5 * pow(x, 4) - \
                      0.00346042540793 * pow(x, 3) + \
                      0.0931500291375 * pow(x, 2) - \
                      1.2352733683 * x + \
                      7.73791666667
         turn_time *= polynomial
+        """
     else:
         turn_time = 0.0
     print(f"[DEBUG] Found tank time of {turn_time} for {delta_orient}deg")
