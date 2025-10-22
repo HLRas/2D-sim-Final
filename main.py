@@ -764,14 +764,13 @@ def run(clock, car:Car, game_map, caption):
                         
                         
                         print("[DEBUG] Now executing tank turn")
-                        car.tank_turn = True
+                        #car.tank_turn = True
                         if not HEADLESS_MODE:
                             car.set_position((car.x-50, car.y+100)) #move car for testing, simulating error
                             car.set_orientation(math.radians(-20))
                         else:
                             print("[DEBUG] Waiting for new position")
                             request_pos = True
-                            # get a bunch of positions
                             while request_pos:
                                 time.sleep(0.01)
                             stop = False
@@ -784,6 +783,14 @@ def run(clock, car:Car, game_map, caption):
                         car.tank_time_start = time.time()
                         target = [CUBE_SIZE*(space.grid_x+7), CUBE_SIZE*(space.grid_y+2.5)]
                         car.tank_time = get_tanktime(pos_c = [car.x,car.y], orient_c=math.degrees(car.angle), pos_d=target)
+                        car.straight_time = get_straighttime(pos_c = [car.x,car.y], pos_d=target)
+                        clear_wheel_speeds()
+                        L = 50 if car.tank_time[1] else -50
+                        R = -50 if car.tank_time[1] else 50
+                        queue_wheel_speeds(L,R,0) # queue tank turn times
+                        queue_wheel_speeds(0,0,car.tank_time[0]*2)
+                        queue_wheel_speeds(50,50,car.tank_time[0]+0.001)
+                        queue_wheel_speeds(0,0, car.tank_time[0]+0.001 + 2*car.straight_time)
                 
                 else:
                     # Only set to unoccupied if it's not permanently occupied
@@ -814,7 +821,7 @@ def find_closest(data, timestamp, index=2):
 def get_straighttime(pos_c, pos_d, speed=50):
     dy, dx = pos_d[1] - pos_c[1], pos_d[0] - pos_c[0]
     d = math.sqrt(dx**2 + dy**2)
-    straight_time = d/speed - 2 # shave a bit off to tune
+    straight_time = d/speed
     return straight_time
 
 def get_tanktime(pos_c, orient_c:float, pos_d, thres_deg=2, turn_speed=50):
@@ -838,7 +845,7 @@ def get_tanktime(pos_c, orient_c:float, pos_d, thres_deg=2, turn_speed=50):
                      7.73791666667
         print(f"[DEBUG] Normal turn time: {x}")
         print(f"[DEBUG] Scaled turn time: {turn_time*polynomial}")
-        #turn_time *= polynomial
+        turn_time *= polynomial
         
     else:
         turn_time = 0.0
@@ -857,6 +864,7 @@ def execute_tank(car:Car, target, speed=50):
         speeds = car.get_speeds()
         queue_wheel_speeds(speeds[0], speeds[1], time.time()-start_time_follow)
         print("[DEBUG] Queued tank speed")
+    
     else:
         car.tank_turn = False
         print("[DEBUG] Tank turn complete")
@@ -869,8 +877,10 @@ def execute_tank(car:Car, target, speed=50):
         print("[DEBUG] Orientation within threshold, starting straight mode after 2 seconds")
         time.sleep(2)
         car.straight_mode = True
+        clear_wheel_speeds()
         car.straight_time = get_straighttime([car.x,car.y], target)
         car.straight_time_start = time.time()
+        
         # closed loop
         """
         request_pos = True
@@ -900,14 +910,14 @@ def execute_tank(car:Car, target, speed=50):
 def execute_straight(car:Car, speed=50):
     global stop
     straight_time_elap = time.time() - car.straight_time_start
-    clear_wheel_speeds()
+    
     if straight_time_elap < car.straight_time:
         car.set_speeds(speed,speed)
     else:
         car.straight_mode = False
         car.set_speeds()
         stop = True
-        
+
     speeds = car.get_speeds()
     queue_wheel_speeds(speeds[0], speeds[1], time.time()-start_time_follow)
 
