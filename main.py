@@ -762,9 +762,8 @@ def run(clock, car:Car, game_map, caption):
                         if analyse:
                             save_analyse_to_csv()
                         
-                        
                         print("[DEBUG] Now executing tank turn")
-                        car.tank_turn = True
+                        #car.tank_turn = True
                         if not HEADLESS_MODE:
                             car.set_position((car.x-50, car.y+100)) #move car for testing, simulating error
                             car.set_orientation(math.radians(-20))
@@ -780,10 +779,18 @@ def run(clock, car:Car, game_map, caption):
                             car.set_position(pos)
                             car.set_orientation(orient)
 
+                        start_time_follow = time.time()
+                        clear_wheel_speeds()
                         car.tank_time_start = time.time()
                         target = [CUBE_SIZE*(space.grid_x+7), CUBE_SIZE*(space.grid_y+2.5)]
                         car.tank_time = get_tanktime(pos_c = [car.x,car.y], orient_c=math.degrees(car.angle), pos_d=target)
                         car.straight_time = get_straighttime(pos_c = [car.x,car.y], pos_d=target)
+                        L = 50 if car.tank_time[1] else -50
+                        R = -50 if car.tank_time[1] else 50
+                        queue_wheel_speeds(L,R, time.time()-start_time_follow)
+                        queue_wheel_speeds(0,0, time.time()-start_time_follow + car.tank_time[0])
+                        queue_wheel_speeds(50,50, time.time()-start_time_follow + car.tank_time[0] + 0.01)
+                        queue_wheel_speeds(0,0, time.time()-start_time_follow + car.tank_time[0] + 0.01 + car.straight_time)
                 
                 else:
                     # Only set to unoccupied if it's not permanently occupied
@@ -873,32 +880,6 @@ def execute_tank(car:Car, target, speed=50):
         clear_wheel_speeds()
         car.straight_time = get_straighttime([car.x,car.y], target)
         car.straight_time_start = time.time()
-        
-        # closed loop
-        """
-        request_pos = True
-        print("[DEBUG] Checking position again")
-        while request_pos:
-            time.sleep(0.01)
-        x,y,orient = received_coords
-        pos = (x,y)
-        car.tank_time = get_tanktime(pos_c=pos, orient_c=orient, pos_d=target)
-        if car.tank_time[0] == 0:
-            print("[DEBUG] Orientation within threshold, starting straight mode after 2 seconds")
-            time.sleep(2)
-            car.straight_mode = True
-            car.straight_time = get_straighttime([car.x,car.y], target)
-            car.straight_time_start = time.time()
-        else:
-            print("[DEBUG] Not within threshold, turning again, sleeping 2 seconds")
-            time.sleep(2)
-            car.tank_turn = True
-            car.tank_time_start = time.time()
-        print(f"[DEBUG] Updating position to {pos[0]}, {pos[1]} at {math.degrees(orient)}")
-        car.set_position(pos)
-        car.set_orientation(orient)
-        """
-        
 
 def execute_straight(car:Car, speed=50):
     global stop
