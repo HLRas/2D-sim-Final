@@ -57,7 +57,7 @@ class Car:
         self.carrot_arrival_threshold = 25 # Arrival to a point threshold
         self.carrot_arrival_final_thres = 100 # Arrival to the final point threshold
         self.carrot_slowdown_coeff = 0.3 # Slowdown near destination
-        self.carrot_base_speed = 200
+        self.carrot_base_speed = 150
         self.carrot_max_velo_bonus = 0.2 # Maximum velocity maintainence bonus
         self.carrot_lookahead_speed_bonus = 2.0 # Look further depending on speed
         self.carrot_min_target_speed = 75 # This was 50
