@@ -4,7 +4,7 @@ from config import *
 import time
 
 class Car:
-    def __init__(self, x=50, y=50):
+    def __init__(self, x=50, y=50, ang=-45):
         """Initialize the car with its properties"""
         # Position
         self.x = float(x)
@@ -31,7 +31,7 @@ class Car:
 
         # Vehicle properties
         self.speed = 0.0 # total speed pixels/s
-        self.angle = math.radians(0) # radians
+        self.angle = ang # radians
         self.width = CAR_WIDTH
         self.length = CAR_LENGTH
 
@@ -63,7 +63,7 @@ class Car:
         self.carrot_min_target_speed = 75 # This was 50
         self.carrot_velo_bonus_coeff = 0.1 # Velocity maintainence coeff
         self.carrot_max_turn_rate = 0 # Max turn rate in rad
-        self.carrot_max_turn_rate_const = 25
+        self.carrot_max_turn_rate_const = 10
         self.carrot_command_coeff = 1 # Scale wheel commands by this
         self.carrot_turn_pen_coeff = 10.0 # Turn penalty coefficient
         self.carrot_slowdown_thres = 400 # How far away from dest should we slow down
