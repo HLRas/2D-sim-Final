@@ -723,7 +723,7 @@ def run(clock, car:Car, game_map, caption):
         car.find_next_pos(dt)
         
         # Record position during path following (headless mode only)
-        if HEADLESS_MODE and path_following_started and (car.carrot_following or car.cross_following):
+        if HEADLESS_MODE and path_following_started:
             car_positions.append([car.x, car.y, car.angle])
             if len(car_positions) % 60 == 0:  # Debug every 60 frames
                 print(f"[CSV] Recorded {len(car_positions)} positions")
