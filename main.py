@@ -764,7 +764,7 @@ def run(clock, car:Car, game_map, caption):
                         
                         
                         print("[DEBUG] Now executing tank turn")
-                        #car.tank_turn = True
+                        car.tank_turn = True
                         if not HEADLESS_MODE:
                             car.set_position((car.x-50, car.y+100)) #move car for testing, simulating error
                             car.set_orientation(math.radians(-20))
@@ -846,11 +846,12 @@ def get_tanktime(pos_c, orient_c:float, pos_d, thres_deg=2, turn_speed=50):
     return turn_time, clockwise
 
 def execute_tank(car:Car, target, speed=50):
+    global stop
     tank_time_elap = time.time() - car.tank_time_start
     if tank_time_elap < car.tank_time[0]:
+        clear_wheel_speeds()
         if car.tank_time[1] == True:
             car.set_speeds(speed,-speed)
-
         else:
             car.set_speeds(-speed,speed)
         speeds = car.get_speeds()
@@ -859,6 +860,7 @@ def execute_tank(car:Car, target, speed=50):
     else:
         car.tank_turn = False
         print("[DEBUG] Tank turn complete")
+        clear_wheel_speeds()
         car.set_speeds() #stop
         speeds = car.get_speeds()
         queue_wheel_speeds(speeds[0], speeds[1], time.time()-start_time_follow)
@@ -896,15 +898,18 @@ def execute_tank(car:Car, target, speed=50):
         
 
 def execute_straight(car:Car, speed=50):
+    global stop
     straight_time_elap = time.time() - car.straight_time_start
+    clear_wheel_speeds()
     if straight_time_elap < car.straight_time:
         car.set_speeds(speed,speed)
     else:
         car.straight_mode = False
         car.set_speeds()
-        speeds = car.get_speeds()
-        queue_wheel_speeds(speeds[0], speeds[1], time.time()-start_time_follow)
         stop = True
+        
+    speeds = car.get_speeds()
+    queue_wheel_speeds(speeds[0], speeds[1], time.time()-start_time_follow)
 
 def main():
     """Main application entry"""
