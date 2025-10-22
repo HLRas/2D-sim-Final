@@ -53,7 +53,7 @@ class Car:
         self.carrot_path_points = []
         self.carrot_index = 0 # Closest point index to path
         self.carrot_target_ind = 0 # Target index on path
-        self.carrot_base_distance = 10 # Minimum lookahead distance ##changed from 10
+        self.carrot_base_distance = 100 # Minimum lookahead distance ##changed from 10
         self.carrot_arrival_threshold = 25 # Arrival to a point threshold
         self.carrot_arrival_final_thres = 100 # Arrival to the final point threshold
         self.carrot_slowdown_coeff = 0.3 # Slowdown near destination
@@ -63,10 +63,10 @@ class Car:
         self.carrot_min_target_speed = 75 # This was 50
         self.carrot_velo_bonus_coeff = 0.1 # Velocity maintainence coeff
         self.carrot_max_turn_rate = 0 # Max turn rate in rad
-        self.carrot_max_turn_rate_const = 10
+        self.carrot_max_turn_rate_const = 25
         self.carrot_command_coeff = 1 # Scale wheel commands by this
         self.carrot_turn_pen_coeff = 10.0 # Turn penalty coefficient
-        self.carrot_slowdown_thres = 400 # How far away from dest should we slow down
+        self.carrot_slowdown_thres = 200 # How far away from dest should we slow down
         self.carrot_slowed = False #if in slow region
 
         # Cross-track error following
