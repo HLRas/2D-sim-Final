@@ -764,7 +764,7 @@ def run(clock, car:Car, game_map, caption):
                         
                         
                         print("[DEBUG] Now executing tank turn")
-                        car.tank_turn = True
+                        #car.tank_turn = True
                         if not HEADLESS_MODE:
                             car.set_position((car.x-50, car.y+100)) #move car for testing, simulating error
                             car.set_orientation(math.radians(-20))
