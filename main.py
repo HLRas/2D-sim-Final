@@ -764,7 +764,7 @@ def run(clock, car:Car, game_map, caption):
                         
                         
                         print("[DEBUG] Now executing tank turn")
-                        #car.tank_turn = True
+                        car.tank_turn = True
                         if not HEADLESS_MODE:
                             car.set_position((car.x-50, car.y+100)) #move car for testing, simulating error
                             car.set_orientation(math.radians(-20))
@@ -784,15 +784,6 @@ def run(clock, car:Car, game_map, caption):
                         target = [CUBE_SIZE*(space.grid_x+7), CUBE_SIZE*(space.grid_y+2.5)]
                         car.tank_time = get_tanktime(pos_c = [car.x,car.y], orient_c=math.degrees(car.angle), pos_d=target)
                         car.straight_time = get_straighttime(pos_c = [car.x,car.y], pos_d=target)
-                        clear_wheel_speeds()
-                        L = 50 if car.tank_time[1] else -50
-                        R = -50 if car.tank_time[1] else 50
-                        start_time_follow = time.time()
-                        queue_wheel_speeds(L,R,0) # queue tank turn times
-                        queue_wheel_speeds(0,0,car.tank_time[0]*2)
-                        queue_wheel_speeds(50,50,car.tank_time[0]*2+0.001)
-                        queue_wheel_speeds(0,0, car.tank_time[0]*2+0.001 + 2*car.straight_time)
-                        print(wheel_speed_queue)
                 
                 else:
                     # Only set to unoccupied if it's not permanently occupied
@@ -818,8 +809,6 @@ def run(clock, car:Car, game_map, caption):
 def find_closest(data, timestamp, index=2):
     """Finds the closest data values to the specified timestamp"""
     timestamps = [tp[index] for tp in data]
-    print(timestamp)
-    print(timestamps)
     return data[bisect.bisect_left(timestamps, timestamp)]
 
 def get_straighttime(pos_c, pos_d, speed=50):
