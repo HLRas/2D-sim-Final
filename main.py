@@ -819,6 +819,7 @@ def find_closest(data, timestamp, index=2):
     """Finds the closest data values to the specified timestamp"""
     timestamps = [tp[index] for tp in data]
     print(timestamp)
+    print(timestamps)
     return data[bisect.bisect_left(timestamps, timestamp)]
 
 def get_straighttime(pos_c, pos_d, speed=50):
