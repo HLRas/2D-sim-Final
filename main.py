@@ -787,10 +787,11 @@ def run(clock, car:Car, game_map, caption):
                         clear_wheel_speeds()
                         L = 50 if car.tank_time[1] else -50
                         R = -50 if car.tank_time[1] else 50
+                        start_time_follow = time.time()
                         queue_wheel_speeds(L,R,0) # queue tank turn times
                         queue_wheel_speeds(0,0,car.tank_time[0]*2)
-                        queue_wheel_speeds(50,50,car.tank_time[0]+0.001)
-                        queue_wheel_speeds(0,0, car.tank_time[0]+0.001 + 2*car.straight_time)
+                        queue_wheel_speeds(50,50,car.tank_time[0]*2+0.001)
+                        queue_wheel_speeds(0,0, car.tank_time[0]*2+0.001 + 2*car.straight_time)
                         print(wheel_speed_queue)
                 
                 else:
