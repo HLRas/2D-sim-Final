@@ -779,7 +779,7 @@ def run(clock, car:Car, game_map, caption):
                             car.set_position(pos)
                             car.set_orientation(orient)
 
-                        start_time_follow = time.time()
+                        """start_time_follow = time.time()
                         clear_wheel_speeds()
                         car.tank_time_start = time.time()
                         target = [CUBE_SIZE*(space.grid_x+7), CUBE_SIZE*(space.grid_y+2.5)]
@@ -791,7 +791,7 @@ def run(clock, car:Car, game_map, caption):
                         queue_wheel_speeds(0,0, time.time()-start_time_follow + car.tank_time[0])
                         queue_wheel_speeds(50,50, time.time()-start_time_follow + car.tank_time[0] + 0.01)
                         queue_wheel_speeds(0,0, time.time()-start_time_follow + car.tank_time[0] + 0.01 + car.straight_time)
-                
+                        """
                 else:
                     # Only set to unoccupied if it's not permanently occupied
                     if space.occupied and not space.permanently_occupied:
