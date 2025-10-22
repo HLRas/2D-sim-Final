@@ -400,6 +400,9 @@ def queue_wheel_speeds(left_speed, right_speed, time_since_pathfollow):
     if start_time_follow != 0:
         wheel_speed_queue.append((left_speed, right_speed, time_since_pathfollow))
 
+def clear_wheel_speeds():
+    wheel_speed_queue.clear()
+
 def handle_automated_pathfinding(frame_count, game_map : Map, car : Car):
     """Handle automated pathfinding setup for headless mode"""
     global start_time_follow
@@ -738,7 +741,8 @@ def run(clock, car:Car, game_map, caption):
                     if not space.occupied:
                         
                         space.set_occupied(True, game_map.cubes)
-
+                        start_time_follow = time.time()
+                        clear_wheel_speeds()
                         car.set_speeds() #stop
                         speeds = car.get_speeds()
                         queue_wheel_speeds(speeds[0], speeds[1], time.time()-start_time_follow)
