@@ -791,6 +791,7 @@ def run(clock, car:Car, game_map, caption):
                         queue_wheel_speeds(0,0,car.tank_time[0]*2)
                         queue_wheel_speeds(50,50,car.tank_time[0]+0.001)
                         queue_wheel_speeds(0,0, car.tank_time[0]+0.001 + 2*car.straight_time)
+                        print(wheel_speed_queue)
                 
                 else:
                     # Only set to unoccupied if it's not permanently occupied
