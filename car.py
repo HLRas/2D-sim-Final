@@ -4,7 +4,7 @@ from config import *
 import time
 
 class Car:
-    def __init__(self, x=50, y=50, ang=-45):
+    def __init__(self, x=300, y=700, ang=0):
         """Initialize the car with its properties"""
         # Position
         self.x = float(x)
@@ -85,7 +85,7 @@ class Car:
 
         # timing
         self.start_time_pathfollow = 0
-        self.wait_turning = 1.0
+        self.wait_turning = 0.5 # this was 1
 
         # Tank turn
         self.tank_turn = False
