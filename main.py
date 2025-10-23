@@ -808,7 +808,7 @@ def get_tanktime(pos_c, orient_c:float, pos_d, thres_deg=2, turn_speed=50):
                      7.73791666667
         print(f"[DEBUG] Normal turn time: {x}")
         print(f"[DEBUG] Scaled turn time: {turn_time*polynomial}")
-        turn_time *= polynomial
+        #turn_time *= polynomial
         
     else:
         turn_time = 0.0
