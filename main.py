@@ -799,7 +799,7 @@ def get_tanktime(pos_c, orient_c:float, pos_d, thres_deg=2, turn_speed=50):
     print(f"[DEBUG] delta_orient: {delta_orient}")
     if abs(delta_orient) > thres_deg:
         turn_time = abs(CAR_WIDTH/(2*turn_speed)*math.radians(delta_orient))
-        x = delta_orient
+        x = abs(delta_orient)
         # Scale turn time for better response
         
         polynomial = -4.32307692308e-7 * pow(x, 5) + \
