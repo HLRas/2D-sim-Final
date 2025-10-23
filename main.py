@@ -35,6 +35,7 @@ arduino_serial = None
 wheel_speed_queue = []
 arduino_lock = threading.Lock()
 arduino_comm_thread = None
+arduino_run = True
 
 # Starting time of auto-follow
 start_time_follow = 0
@@ -212,7 +213,7 @@ def arduino_thread():
     sendRight = True
     lastSentRight = 0
     changeThres = 0.001 # By how much should a speed change for a new one to be sent
-    while True:
+    while arduino_run:
         if restarted:
             restarted = False
             wheel_speed_queue.clear()
