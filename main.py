@@ -728,8 +728,9 @@ def run(clock, car:Car, game_map, caption):
                         if analyse:
                             save_analyse_to_csv()
                         
-                        print("[DEBUG] Now executing tank turn")
+                        print("[DEBUG] Now executing tank turn after 3 seconds")
                         #car.tank_turn = True
+                        time.sleep(3)
                         if not HEADLESS_MODE:
                             continue
                             car.set_position((car.x-50, car.y+100)) #move car for testing, simulating error
