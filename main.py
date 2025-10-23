@@ -794,7 +794,7 @@ def get_tanktime(pos_c, orient_c:float, pos_d, thres_deg=2, turn_speed=50):
     print(f"[DEBUG] dx: {dx}, dy: {dy}")
     orient_d = math.degrees(-math.atan(dy/dx))
     print(f"[DEBUG] oreint_d: {orient_d}, orient_c: {orient_c}")
-    delta_orient = orient_d - orient_c
+    delta_orient = orient_d - math.degrees(orient_c)
     clockwise = True if delta_orient < 0 else False
     
     if abs(delta_orient) > thres_deg:
