@@ -253,7 +253,7 @@ def arduino_thread():
                     if sendLeft or sendRight:
                         with arduino_lock:
                             try:
-                                msg = f"{left:.3f},{right:.3f}\n"
+                                msg = f"{left:.3f},{right:.3f},1\n"
                                 arduino_serial.write(msg.encode('utf-8'))
                                 arduino_serial.flush()
                                 print(f"[Python] Sent: {msg} of relative time {timestamp} to Arduino")
