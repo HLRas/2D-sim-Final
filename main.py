@@ -325,42 +325,7 @@ def tcp_receiver_thread():
             except Exception as e:
                 print(f"[Jetson] Socket error: {e}")
                 time.sleep(1)  # Pause on socket error
-"""def tcp_receiver_thread():
-    global received_coords, request_pos, gotFirstCoord
-    #last_coord_time = float('inf')
-    while True:
-        '''if time.time() - last_coord_time > refreshDelay:
-            request_pos = True
-            received_coords = None
-            print("[Jetson] Restarting sim...")
-        '''
 
-        if request_pos: # If a new coordinate has been requested
-            try:
-                msg = jetbot_tcp.recv(21) # Receive exactly one message limited to 21 characters
-                if msg:
-                    try:
-                        decoded = msg.decode("utf-8").strip()
-                        parts = decoded.split(",")
-                        x_, y_, or_ = map(float, parts)
-                        with coord_lock:
-                            received_coords = (x_, y_, or_)
-                        print(f"[Jetson] Received coordinate: {x_}, {y_}, Orientation: {or_}")
-                        if not gotFirstCoord:
-                            gotFirstCoord = True # if the first coordinate had been found
-                        request_pos = False # drop flag for requesting position
-                        #rerunSim = True
-                        #last_coord_time = time.time()
-                    except Exception as e:
-                        print(f"[Jetson] Error parsing message: {msg} ({e})")
-                else:
-                    print("[Jetson] No message received")
-            except Exception as e:
-                print(f"[Jetson] Socket error: {e}")
-            #finally:
-                #print("[Jetson] Closing connection after receiving first coordinate")
-                #jetbot_tcp.close()
-"""    
 def get_args():
     """Get arguments from command-line"""
     global HEADLESS_MODE, AUTOPATH_FOLLOW, PATHFOLLOW_METHOD, ENABLE_ARDUINO
@@ -780,8 +745,15 @@ def run(clock, car:Car, game_map, caption):
                             print(f"[DEBUG] Updating position to {pos[0]}, {pos[1]} at {math.degrees(orient)}")
                             car.set_position(pos)
                             car.set_orientation(orient)
-                        target = [CUBE_SIZE*(space.grid_x+7), CUBE_SIZE*(space.grid_y+2.5)]
-                        arduino_run = False # stop the arduino thread
+                            target = [CUBE_SIZE*(space.grid_x+7), CUBE_SIZE*(space.grid_y+2.5)]
+                            arduino_run = False # stop the arduino thread
+                            tank = get_tanktime(pos_c=pos, orient_c=orient, pos_d=target)
+                            straight = get_straighttime(pos_c=pos,pos_d=target)
+
+                            msg = f"{tank:.3f},{straight:.3f},0\n"
+                            arduino_serial.write(msg.encode('utf-8'))
+                            arduino_serial.flush()
+                        
                 else:
                     # Only set to unoccupied if it's not permanently occupied
                     if space.occupied and not space.permanently_occupied:
@@ -840,7 +812,8 @@ def get_tanktime(pos_c, orient_c:float, pos_d, thres_deg=2, turn_speed=50):
     else:
         turn_time = 0.0
     print(f"[DEBUG] Found tank time of {turn_time} for {delta_orient}deg")
-    return turn_time, clockwise
+    turn_time = turn_time if clockwise else -turn_time
+    return turn_time
 
 def execute_tank(car:Car, target, speed=50):
     global stop
