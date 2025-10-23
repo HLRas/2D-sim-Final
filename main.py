@@ -59,30 +59,6 @@ positions = []
 speeds = []
 sent_speeds = []
 
-# --- Real-time trajectory display ---
-display_trajectory = []  # Array to store positions for real-time trajectory display
-
-def draw_car_trajectory():
-    """Draw the car's trajectory from recorded positions"""
-    if len(display_trajectory) < 2:
-        return
-    
-    # Get the display surface
-    screen = pygame.display.get_surface()
-    
-    # Draw the trajectory line (yellow for visibility)
-    pygame.draw.lines(screen, (0, 0, 255), False, display_trajectory, 2)
-    
-    # Draw start point (green circle)
-    if display_trajectory:
-        start_pos = (int(display_trajectory[0][0]), int(display_trajectory[0][1]))
-        pygame.draw.circle(screen, (0, 255, 0), start_pos, 4)
-    
-    # Draw end point (red circle) - current position
-    if len(display_trajectory) > 1:
-        end_pos = (int(display_trajectory[-1][0]), int(display_trajectory[-1][1]))
-        pygame.draw.circle(screen, (255, 0, 0), end_pos, 4)
-
 def save_analyse_to_csv():
     """Save analysis data (positions, speeds, sent_speeds) to separate CSV files"""
     if not positions and not speeds and not sent_speeds:
@@ -627,13 +603,6 @@ def run(clock, car:Car, game_map, caption):
         if analyse:
             positions.append([car.x*2/1000, car.y*2/1000])
             speeds.append([car.get_speeds(), time.time()])
-        
-        # Record trajectory for real-time display (GUI mode only)
-        if not HEADLESS_MODE:
-            display_trajectory.append((car.x, car.y))
-            # Limit trajectory length to prevent memory issues and keep recent path
-            if len(display_trajectory) > 500:
-                display_trajectory.pop(0)
             
         # ---
         frame_count += 1
@@ -778,7 +747,7 @@ def run(clock, car:Car, game_map, caption):
                         speeds = car.get_speeds()
                         queue_wheel_speeds(speeds[0], speeds[1], time.time()-start_time_follow)
                         stop = True
-
+                        
                         car.stop_path_following() # Stop following
                         
                         print(f"[DEBUG] SUCCESS! Car parked in space at frame {frame_count}!")
@@ -832,9 +801,6 @@ def run(clock, car:Car, game_map, caption):
         if not HEADLESS_MODE:
             game_map.draw()
             car.draw()
-            
-            # Draw car trajectory
-            draw_car_trajectory()
 
             # Show FPS and cotrols info
             fps = clock.get_fps()

@@ -85,7 +85,7 @@ class Car:
 
         # timing
         self.start_time_pathfollow = 0
-        self.wait_turning = 0.5 # this was 1
+        self.wait_turning = 0 # this was 1
 
         # Tank turn
         self.tank_turn = False
