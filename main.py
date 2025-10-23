@@ -784,6 +784,7 @@ def get_straighttime(pos_c, pos_d, speed=50):
     dy, dx = pos_d[1] - pos_c[1], pos_d[0] - pos_c[0]
     d = math.sqrt(dx**2 + dy**2)
     straight_time = d/speed
+    print(f"[DEBUG] found straight time of {straight_time}")
     return straight_time
 
 def get_tanktime(pos_c, orient_c:float, pos_d, thres_deg=2, turn_speed=50):
@@ -814,49 +815,6 @@ def get_tanktime(pos_c, orient_c:float, pos_d, thres_deg=2, turn_speed=50):
     print(f"[DEBUG] Found tank time of {turn_time} for {delta_orient}deg")
     turn_time = turn_time if clockwise else -turn_time
     return turn_time
-
-def execute_tank(car:Car, target, speed=50):
-    global stop
-    tank_time_elap = time.time() - car.tank_time_start
-    if tank_time_elap < car.tank_time[0]:
-        clear_wheel_speeds()
-        if car.tank_time[1] == True:
-            car.set_speeds(speed,-speed)
-        else:
-            car.set_speeds(-speed,speed)
-        speeds = car.get_speeds()
-        queue_wheel_speeds(speeds[0], speeds[1], time.time()-start_time_follow)
-        print("[DEBUG] Queued tank speed")
-    
-    else:
-        car.tank_turn = False
-        print("[DEBUG] Tank turn complete")
-        clear_wheel_speeds()
-        car.set_speeds() #stop
-        speeds = car.get_speeds()
-        queue_wheel_speeds(speeds[0], speeds[1], time.time()-start_time_follow)
-        stop = True
-
-        print("[DEBUG] Orientation within threshold, starting straight mode after 2 seconds")
-        time.sleep(2)
-        car.straight_mode = True
-        clear_wheel_speeds()
-        car.straight_time = get_straighttime([car.x,car.y], target)
-        car.straight_time_start = time.time()
-
-def execute_straight(car:Car, speed=50):
-    global stop
-    straight_time_elap = time.time() - car.straight_time_start
-    
-    if straight_time_elap < car.straight_time:
-        car.set_speeds(speed,speed)
-    else:
-        car.straight_mode = False
-        car.set_speeds()
-        stop = True
-
-    speeds = car.get_speeds()
-    queue_wheel_speeds(speeds[0], speeds[1], time.time()-start_time_follow)
 
 def main():
     """Main application entry"""
