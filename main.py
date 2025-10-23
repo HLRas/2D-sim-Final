@@ -791,6 +791,7 @@ def get_straighttime(pos_c, pos_d, speed=50):
 def get_tanktime(pos_c, orient_c:float, pos_d, thres_deg=2, turn_speed=50):
     """Calculate the time needed to turn the car, in place, to face the destination"""
     dy, dx = pos_d[1] - pos_c[1], pos_d[0] - pos_c[0]
+    print(f"[DEBUG] dx: {dx}, dy: {dy}")
     orient_d = math.degrees(-math.atan(dy/dx))
 
     delta_orient = orient_d - orient_c
