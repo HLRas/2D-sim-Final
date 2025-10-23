@@ -751,9 +751,9 @@ def run(clock, car:Car, game_map, caption):
                             tank = get_tanktime(pos_c=pos, orient_c=orient, pos_d=target)
                             straight = get_straighttime(pos_c=pos,pos_d=target)
 
-                            msg = f"{tank:.3f},{straight:.3f},0\n"
-                            arduino_serial.write(msg.encode('utf-8'))
-                            arduino_serial.flush()
+                            #msg = f"{tank:.3f},{straight:.3f},0\n"
+                            #arduino_serial.write(msg.encode('utf-8'))
+                            #arduino_serial.flush()
                         
                 else:
                     # Only set to unoccupied if it's not permanently occupied
