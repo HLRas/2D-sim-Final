@@ -495,7 +495,7 @@ def run_simulation(layout_type):
         run(clock, car, game_map, caption)
 
 def run(clock, car:Car, game_map, caption):
-    global received_coords, last_coord_time, receiver_thread, arduino_comm_thread, stop, start_time_follow, speeds, positions, request_pos
+    global received_coords, last_coord_time, arduino_run, receiver_thread, arduino_comm_thread, stop, start_time_follow, speeds, positions, request_pos
 
     # Performance tracking
     frame_count = 0
@@ -780,20 +780,8 @@ def run(clock, car:Car, game_map, caption):
                             print(f"[DEBUG] Updating position to {pos[0]}, {pos[1]} at {math.degrees(orient)}")
                             car.set_position(pos)
                             car.set_orientation(orient)
-
-                        """start_time_follow = time.time()
-                        clear_wheel_speeds()
-                        car.tank_time_start = time.time()
                         target = [CUBE_SIZE*(space.grid_x+7), CUBE_SIZE*(space.grid_y+2.5)]
-                        car.tank_time = get_tanktime(pos_c = [car.x,car.y], orient_c=math.degrees(car.angle), pos_d=target)
-                        car.straight_time = get_straighttime(pos_c = [car.x,car.y], pos_d=target)
-                        L = 50 if car.tank_time[1] else -50
-                        R = -50 if car.tank_time[1] else 50
-                        queue_wheel_speeds(L,R, time.time()-start_time_follow)
-                        queue_wheel_speeds(0,0, time.time()-start_time_follow + car.tank_time[0])
-                        queue_wheel_speeds(50,50, time.time()-start_time_follow + car.tank_time[0] + 0.01)
-                        queue_wheel_speeds(0,0, time.time()-start_time_follow + car.tank_time[0] + 0.01 + car.straight_time)
-                        """
+                        arduino_run = False # stop the arduino thread
                 else:
                     # Only set to unoccupied if it's not permanently occupied
                     if space.occupied and not space.permanently_occupied:
