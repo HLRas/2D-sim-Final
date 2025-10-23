@@ -781,7 +781,7 @@ def find_closest(data, timestamp, index=2):
     return data[bisect.bisect_left(timestamps, timestamp)]
 
 def get_straighttime(pos_c, pos_d, speed=50):
-    dy, dx = pos_d[1] - pos_c[1], pos_d[0] - pos_c[0]
+    dy, dx = pos_d[1] - pos_c[1], pos_d[0] - pos_c[0]-50
     d = math.sqrt(dx**2 + dy**2)
     straight_time = d/speed
     print(f"[DEBUG] found straight time of {straight_time}")
